@@ -4,9 +4,8 @@ import time
 import cPickle
 import collections
 import time
-sys.path.append('./')
+sys.path.append('../')
 
-from util.utility import *
 import toolkit
 
 
