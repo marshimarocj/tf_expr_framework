@@ -42,13 +42,13 @@ class TrnTst(object):
     self._model_cfg = None
     self._path_cfg = None
     self._model = None
-    self.logger = None
+    self._logger = None
 
     self._model_cfg = model_cfg
     self._path_cfg = path_cfg
     self._model = model
 
-    self.logger = toolkit.set_logger('TrnTst%f'%time.time(), path_cfg.log_file)
+    self._logger = toolkit.set_logger('TrnTst%f'%time.time(), path_cfg.log_file)
 
   @property
   def model_cfg(self):
@@ -98,9 +98,9 @@ class TrnTst(object):
       if step % self.model_cfg.val_iter == 0:
         metrics = self._validation(sess, tst_reader)
 
-        self.logger.info('step (%d/%d)', step, total_step)
+        self._logger.info('step (%d/%d)', step, total_step)
         for key in metrics:
-          self.logger.info('%s:%.4f', key, metrics[key])
+          self._logger.info('%s:%.4f', key, metrics[key])
 
     self.model.saver.save(
       sess, os.path.join(self.path_cfg.model_dir, 'epoch'), global_step=epoch)
@@ -147,9 +147,9 @@ class TrnTst(object):
 
       # round 0, just for quick checking
       metrics = self._validation(sess, tst_reader, val_bleu=True, val_cider=True)
-      self.logger.info('step (%d/%d)', 0, total_step)
+      self._logger.info('step (%d/%d)', 0, total_step)
       for key in metrics:
-        self.logger.info('%s:%.4f', key, metrics[key])
+        self._logger.info('%s:%.4f', key, metrics[key])
 
       metric_history = []
       step = 0
@@ -160,9 +160,9 @@ class TrnTst(object):
         metrics = self._validation(sess, tst_reader, val_bleu=True, val_cider=True)
         metric_history.append(metrics)
 
-        self.logger.info('epoch (%d/%d)', epoch, self.model_cfg.num_epoch)
+        self._logger.info('epoch (%d/%d)', epoch, self.model_cfg.num_epoch)
         for key in metrics:
-          self.logger.info('%s:%.4f', key, metrics[key])
+          self._logger.info('%s:%.4f', key, metrics[key])
 
       val_metric_file = self.path_cfg.val_metric_file
       cPickle.dump(metric_history, open(val_metric_file, 'w'))

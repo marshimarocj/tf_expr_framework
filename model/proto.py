@@ -296,12 +296,12 @@ class ModelCombiner(FullModel):
       with tf.variable_scope(self.name_scope):
         self.gradient_op = []
         for m, model_proto in enumerate(self.model_protos):
-          if self.config.optimizer_alg == 'Adam':
-            optimizer = tf.train.AdamOptimizer(self.config.learning_rates[m])
-          elif self.config.optimizer_alg == 'SGD':
-            optimizer = tf.train.GradientDescentOptimizer(self.config.learning_rate)
-
           if not self.config.stop_gradients[m]:
+            if self.config.optimizer_alg == 'Adam':
+              optimizer = tf.train.AdamOptimizer(self.config.learning_rates[m])
+            elif self.config.optimizer_alg == 'SGD':
+              optimizer = tf.train.GradientDescentOptimizer(self.config.learning_rates[m])
+
             weight = tf.get_collection(
               tf.GraphKeys.TRAINABLE_VARIABLES, model_proto.name_scope)
             grads_and_weights = optimizer.compute_gradients(self.loss_op, weight)
