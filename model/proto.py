@@ -199,7 +199,7 @@ class FullModel(object):
   def build_tst_graph(self):
     basegraph = tf.Graph()
 
-    basegraph = self._build_parameter_graph(basegraph)
+    self._build_parameter_graph(basegraph)
     self.add_tst_input(basegraph)
 
     self._build_inference_graph_in_tst(basegraph)
@@ -212,7 +212,7 @@ class FullModel(object):
   def build_trn_tst_graph(self):
     basegraph = tf.Graph()
 
-    basegraph = self._build_parameter_graph(basegraph)
+    self._build_parameter_graph(basegraph)
     self.add_trn_tst_input(basegraph)
 
     self._build_inference_graph_in_trn_tst(basegraph)
@@ -283,7 +283,7 @@ class ModelCombiner(FullModel):
   def build_trn_tst_graph(self):
     basegraph = tf.Graph()
 
-    basegraph = self._build_parameter_graph(basegraph)
+    self._build_parameter_graph(basegraph)
     self.add_trn_tst_input(basegraph)
 
     self._build_inference_graph_in_trn_tst(basegraph)
