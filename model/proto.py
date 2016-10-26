@@ -319,3 +319,6 @@ class ModelCombiner(FullModel):
     self._add_init(basegraph)
 
     return basegraph
+
+  def op_in_trn(self):
+    return self.loss_op, self.train_ops, self.summary_op
