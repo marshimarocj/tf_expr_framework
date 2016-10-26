@@ -90,7 +90,7 @@ class TrnTst(object):
       sess, trn_reader, tst_reader, summarywriter, step, total_step, epoch):
     trn_batch_size = self.model_cfg.trn_batch_size
     for data in trn_reader.yield_trn_batch(trn_batch_size):
-      summarystr = self.feed_data_and_run_train_summary_op_in_trn(data, self.model, sess)
+      summarystr = self.feed_data_and_run_train_summary_op_in_trn(data, sess)
 
       step += 1
 
