@@ -111,6 +111,10 @@ class FullModel(object):
     return self._model_proto
 
   @property
+  def init_op(self):
+    return self._init_op
+
+  @property
   def summary_op(self):
     return self._summary_op
 
