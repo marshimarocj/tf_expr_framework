@@ -117,7 +117,7 @@ class TrnTst(object):
     iter_num = 0
     avg_loss = 0.
     for data in tst_reader.yield_val_batch(batch_size):
-      loss = self.feed_data_and_run_loss_op_in_val(data, self.model, sess)
+      loss = self.feed_data_and_run_loss_op_in_val(data, sess)
       avg_loss += loss
       iter_num += 1
 
