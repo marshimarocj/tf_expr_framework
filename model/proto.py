@@ -225,13 +225,12 @@ class FullModel(object):
 
     with basegraph.as_default():
       with tf.variable_scope(self.name_scope):
-        with tf.device('/gpu:0'):
-          if self.config.optimizer_alg == 'Adam':
-            optimizer = tf.train.AdamOptimizer(self.config.learning_rate)
-          elif self.config.optimizer_alg == 'SGD':
-            optimizer = tf.train.GradientDescentOptimizer(self.config.learning_rate)
-          self._gradient_op = optimizer.compute_gradients(self._loss_op)
-          self._train_op = optimizer.apply_gradients(self._gradient_op)
+        if self.config.optimizer_alg == 'Adam':
+          optimizer = tf.train.AdamOptimizer(self.config.learning_rate)
+        elif self.config.optimizer_alg == 'SGD':
+          optimizer = tf.train.GradientDescentOptimizer(self.config.learning_rate)
+        self._gradient_op = optimizer.compute_gradients(self._loss_op)
+        self._train_op = optimizer.apply_gradients(self._gradient_op)
 
     self._add_saver(basegraph)
     self._add_summary(basegraph)

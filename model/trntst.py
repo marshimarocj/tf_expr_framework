@@ -148,7 +148,7 @@ class TrnTst(object):
       summarywriter = tf.train.SummaryWriter(self.path_cfg.log_dir, graph=sess.graph)
 
       # round 0, just for quick checking
-      metrics = self._validation(sess, tst_reader, val_bleu=True, val_cider=True)
+      metrics = self._validation(sess, tst_reader)
       self._logger.info('step (%d/%d)', 0, total_step)
       for key in metrics:
         self._logger.info('%s:%.4f', key, metrics[key])
@@ -159,7 +159,7 @@ class TrnTst(object):
         step = self._iterate_epoch(
           sess, trn_reader, tst_reader, summarywriter, step, total_step, base_epoch + epoch)
 
-        metrics = self._validation(sess, tst_reader, val_bleu=True, val_cider=True)
+        metrics = self._validation(sess, tst_reader)
         metric_history.append(metrics)
 
         self._logger.info('epoch (%d/%d)', epoch, self.model_cfg.num_epoch)
