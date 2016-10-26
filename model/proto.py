@@ -182,7 +182,6 @@ class FullModel(object):
         self._summary_op = tf.merge_all_summaries()
 
   def _build_parameter_graph(self, basegraph):
-    basegraph = tf.Graph()
     self.model_proto.build_parameter_graph(basegraph)
 
   def _add_saver(self, basegraph):
@@ -267,8 +266,7 @@ class ModelCombiner(FullModel):
   # boilerpipe functions
   ######################################
 
-  def _build_parameter_graph(self):
-    basegraph = tf.Graph()
+  def _build_parameter_graph(self, basegraph):
     for model_proto in self.model_protos:
       model_proto.build_parameter_graph(basegraph)
 
