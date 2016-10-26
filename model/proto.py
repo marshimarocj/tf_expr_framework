@@ -237,8 +237,8 @@ class FullModel(object):
 
 
 # should implement:
-#   combine: combine computation graph from model_protos, 
-#             will be called in _build_inference_graph
+#   build_inference_graph_in_tst
+#   build_inference_graph_in_trn_tst
 #   all the functions to implement in FullModel
 class ModelCombiner(FullModel):
   name_scope = 'ModelCombiner'
@@ -259,26 +259,31 @@ class ModelCombiner(FullModel):
   ######################################
   # functions to customize
   ######################################
-  def combine(self, basegraph):
-    raise NotImplementedError("""please customize ModelCombiner.combine""")
+  def build_inference_graph_in_tst(self, basegraph):
+    raise NotImplementedError("""please customize build_inference_graph_in_tst""")
+
+  def build_inference_graph_in_trn_tst(self, basegraph):
+    raise NotImplementedError("""please customize build_inference_graph_in_trn_tst""")
 
   ######################################
   # boilerpipe functions
   ######################################
-
   def _build_parameter_graph(self, basegraph):
     for model_proto in self.model_protos:
       model_proto.build_parameter_graph(basegraph)
 
-  def _build_inference_graph_in_tst(self, basegraph):
-    self.combine(basegraph)
-    for model_proto in self.model_protos:
-      model_proto.build_inference_graph_in_tst(basegraph)
+  def build_tst_graph(self):
+    basegraph = tf.Graph()
 
-  def _build_inference_graph_in_trn_tst(self, basegraph):
-    self.combine(basegraph)
-    for model_proto in self.model_protos:
-      model_proto.build_inference_graph_in_trn_tst(basegraph)
+    self._build_parameter_graph(basegraph)
+    self.add_tst_input(basegraph)
+
+    self.build_inference_graph_in_tst(basegraph)
+
+    self._add_saver(basegraph)
+    self._add_init(basegraph)
+
+    return basegraph
 
   def build_trn_tst_graph(self):
     basegraph = tf.Graph()
@@ -286,7 +291,7 @@ class ModelCombiner(FullModel):
     self._build_parameter_graph(basegraph)
     self.add_trn_tst_input(basegraph)
 
-    self._build_inference_graph_in_trn_tst(basegraph)
+    self.build_inference_graph_in_trn_tst(basegraph)
 
     self.add_loss(basegraph)
 
