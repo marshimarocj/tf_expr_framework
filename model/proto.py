@@ -115,6 +115,10 @@ class FullModel(object):
     return self._init_op
 
   @property
+  def saver(self):
+    return self._saver
+
+  @property
   def summary_op(self):
     return self._summary_op
 
