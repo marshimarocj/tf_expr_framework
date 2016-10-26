@@ -271,14 +271,14 @@ class ModelCombiner(FullModel):
       model_proto.build_parameter_graph(basegraph)
 
   def _build_inference_graph_in_tst(self, basegraph):
+    self.combine(basegraph)
     for model_proto in self.model_protos:
       model_proto.build_inference_graph_in_tst(basegraph)
-    self.combine(basegraph)
 
   def _build_inference_graph_in_trn_tst(self, basegraph):
+    self.combine(basegraph)
     for model_proto in self.model_protos:
       model_proto.build_inference_graph_in_trn_tst(basegraph)
-    self.combine(basegraph)
 
   def build_trn_tst_graph(self):
     basegraph = tf.Graph()
