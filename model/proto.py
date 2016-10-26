@@ -156,7 +156,7 @@ class FullModel(object):
   ######################################
   # utility functions
   ######################################
-  def append_op2monitor(name, op):
+  def append_op2monitor(self, name, op):
     self._op2monitor.append((name, op))
 
   ######################################
