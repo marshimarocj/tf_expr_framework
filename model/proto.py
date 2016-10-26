@@ -293,7 +293,7 @@ class ModelCombiner(FullModel):
 
     self.build_inference_graph_in_trn_tst(basegraph)
 
-    self.add_loss(basegraph)
+    self._loss_op = self.add_loss(basegraph)
 
     with basegraph.as_default():
       with tf.variable_scope(self.name_scope):
