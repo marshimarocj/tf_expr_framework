@@ -7,6 +7,8 @@ import time
 import json
 sys.path.append('../')
 
+import tensorflow as tf
+
 import toolkit
 
 
