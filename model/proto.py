@@ -297,7 +297,7 @@ class ModelCombiner(FullModel):
 
     with basegraph.as_default():
       with tf.variable_scope(self.name_scope):
-        self.gradient_op = []
+        self._gradient_op = []
         for m, model_proto in enumerate(self.model_protos):
           if not self.config.stop_gradients[m]:
             if self.config.optimizer_alg == 'Adam':
@@ -308,7 +308,7 @@ class ModelCombiner(FullModel):
             weight = tf.get_collection(
               tf.GraphKeys.TRAINABLE_VARIABLES, model_proto.name_scope)
             grads_and_weights = optimizer.compute_gradients(self.loss_op, weight)
-            self.gradient_op += grads_and_weights[0]
+            self._gradient_op += grads_and_weights[0]
             self.train_ops.append(optimizer.apply_gradients(grads_and_weights))
 
     self._add_saver(basegraph)
