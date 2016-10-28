@@ -59,53 +59,7 @@ def lplq_norm_on_attention(attentions, mask_sum, p, q,
   return attention_completeness, attention_sparsity
 
 
-# # alpha_ops: list of (None, different attention)
-# def lplq_norm_on_attention(alpha_ops, mask, p, q, 
-#     basegraph, name_scope, eps=1e-5):
-#   with basegraph.as_default():
-#     with tf.variable_scope(name_scope) as variable_scope:
-#       mask = mask[:, 1:]
-#       mask = tf.expand_dims(mask, 2) # (None, max_words_in_caption-1, 1)
-#       mask = tf.transpose(mask, perm=[1, 0, 2])
-
-#       alphas = tf.pack(alpha_ops) #(max_words_in_caption, None, len(dim_attention_fts))
-#       alphas = alphas * mask
-
-#       alpha_completeness = tf.pow(alphas + eps, p)
-#       alpha_completeness = tf.reduce_sum(alpha_completeness, 0) # (None, attr_num)
-#       alpha_completeness = tf.pow(alpha_completeness, 1.0/p)
-#       alpha_completeness = tf.reduce_sum(alpha_completeness, 1) #(None,)
-#       alpha_completeness = tf.reduce_sum(alpha_completeness) / tf.reduce_sum(mask)
-
-#       alpha_sparsity = tf.pow(alphas + eps, q)
-#       alpha_sparsity = tf.reduce_sum(alpha_sparsity, 2) # (max_words_in_caption, None)
-#       alpha_sparsity = tf.pow(alpha_sparsity, 1.0/q)
-#       alpha_sparsity = tf.reduce_sum(alpha_sparsity, 0) #(None,)
-#       alpha_sparsity = tf.reduce_sum(alpha_sparsity) / tf.reduce_sum(mask)
-
-#   return alpha_completeness, alpha_sparsity
-
-
 def robust_softmax(x, basegraph, name_scope, eps=1e-5):
   x = tf.nn.softmax(x)
   x = tf.minimum(tf.maximum(x, eps), 1.0-eps)
   return x
-
-
-# def one_layer_LSTM(dim_input, dim_hidden):
-#   return tf.nn.rnn_cell.LSTMCell(dim_hidden, dim_input, use_peepholes=False)
-
-
-# def multi_layer_LSTM(num_layer, dim_input, dim_hidden):
-#   cells = [tf.nn.rnn_cell.LSTMCell(dim_input, dim_hidden, use_peepholes=False)
-#     for l in range(num_layer)]
-#   return tf.nn.rnn_cell.MultiRNNCell(cells)
-
-
-# def one_layer_GRU(num_unit):
-#   return tf.nn.rnn_cell.GRUCell(num_unit)
-
-
-# def multi_layer_GRU(num_layer, num_unit):
-#   cells = [tf.nn.rnn_cell.GRUCell(num_unit) for l in range(num_layer)]
-#   return tf.nn.rnn_cell.MultiRNNCell(cells)

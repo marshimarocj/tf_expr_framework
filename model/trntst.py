@@ -179,4 +179,4 @@ class TrnTst(object):
       sess.run(self.model.init_op)
       self.model.saver.restore(sess, self.path_cfg.model_file)
 
-    self.predict_in_tst(sess, tst_reader, self.path_cfg.predict_file)
+      self.predict_in_tst(sess, tst_reader, self.path_cfg.predict_file)
