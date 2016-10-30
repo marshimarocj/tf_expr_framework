@@ -103,23 +103,29 @@ def sample_top_word_decode(sess, states, wordids,
 
 # note: the addition_inputs remain same across different time steps
 def greedy_word_decode(sess, states, _states, _wordids, update_state_op, prob_op,
-    max_step, addition_input_ops=[], addition_inputs=[]):
+    max_step, 
+    # input placeholders and input values for general attention mechanism 
+    _last_output=None, init_output=None, addition_input_ops=[], addition_inputs=[]):
   batch_size = states.shape[0]
 
   # initialize start words <BOS>
   wordids = np.zeros((batch_size, ), dtype=np.int32)
 
   caption = np.zeros((batch_size, max_step), dtype=np.int32)
+  outputs = init_output
   for i in xrange(max_step): # assume longest sentence <= max_step
     feed_dict = {
       _states: states,
       _wordids: wordids,
     }
+    if _last_output is not None:
+      feed_dict[_last_output] = outputs
     num = len(addition_input_ops)
     for j in range(num):
       feed_dict[addition_input_ops[j]] = addition_inputs[j]
 
-    states, word_probs = sess.run([update_state_op, prob_op],
+    states, word_probs, outputs = sess.run(
+      [update_state_op, prob_op, output_op],
       feed_dict=feed_dict)
     
     wordids = np.argmax(word_probs, 1)
@@ -131,7 +137,9 @@ def greedy_word_decode(sess, states, _states, _wordids, update_state_op, prob_op
 # return sent_pool in shape (batch_size, sent_pool_size, 3)
 # last dimension: (loss, captionId, word_loss)
 def beamsearch_word_decode(sess, states, _states, _wordids, update_state_op, prob_op,
-    max_step, width, sent_pool_size, addition_input_ops=[], addition_inputs=[]):
+    max_step, width, sent_pool_size, 
+    # input placeholders and input values for general attention mechanism
+    _last_outputs=None, init_output=None, addition_input_ops=[], addition_inputs=[]):
   batch_size = states.shape[0]
 
   # initialize start words <BOS>
@@ -146,7 +154,8 @@ def beamsearch_word_decode(sess, states, _states, _wordids, update_state_op, pro
   log_probs = np.zeros((batch_size * width, ), dtype=np.float32)
   # exist beams for each input feature
   batch_sent_pool_remain_cnt = np.zeros((batch_size,), dtype=np.float32) + sent_pool_size
-  
+ 
+  outputs = init_output 
   for i in xrange(0, max_step): # assume longest sentence <= max_step
     # state: (batch_size, state_units) if i == 0 else (batch_size*width, state_units)
     # word_topk: (batch_size,) if i == 0 else (batch_size*width,)
@@ -154,6 +163,8 @@ def beamsearch_word_decode(sess, states, _states, _wordids, update_state_op, pro
       _states: states,
       _wordids: word_topk,
     }
+    if _last_outputs is not None:
+      feed_dict[_last_outputs] = outputs
     num = len(addition_input_ops)
     if i == 0:
       for j in range(num):
@@ -168,7 +179,7 @@ def beamsearch_word_decode(sess, states, _states, _wordids, update_state_op, pro
           expand_addition_input[ib*width: (ib+1)*width] = addition_input[ib]
         feed_dict[addition_input_ops[j]] = expand_addition_input
         
-    states, prob = sess.run([update_state_op, prob_op],
+    states, prob, outputs = sess.run([update_state_op, prob_op, output_op],
       feed_dict=feed_dict)
 
     if i == 0:
@@ -228,7 +239,6 @@ def beamsearch_word_decode(sess, states, _states, _wordids, update_state_op, pro
       word_topk = word_topk2[topk_indices]
       log_probs = log_probs[topk_indices]
       word_loss = np.log(prob_topk2)[topk_indices]
-      # print word_topk
 
       # save
       pres.append(topk_pre_indices)
@@ -300,20 +310,20 @@ def beamsearch_recover_one_caption(wordids, pre, ith, word_loss=None):
   return caption, caption_loss
 
 
-def one_layer_LSTM(dim_input, dim_hidden):
-  return tf.nn.rnn_cell.LSTMCell(dim_hidden, dim_input, use_peepholes=False)
+# def one_layer_LSTM(dim_input, dim_hidden):
+#   return tf.nn.rnn_cell.LSTMCell(dim_hidden, dim_input, use_peepholes=False)
 
 
-def multi_layer_LSTM(num_layer, dim_input, dim_hidden):
-  cells = [tf.nn.rnn_cell.LSTMCell(dim_input, dim_hidden, use_peepholes=False)
-    for l in range(num_layer)]
-  return tf.nn.rnn_cell.MultiRNNCell(cells)
+# def multi_layer_LSTM(num_layer, dim_input, dim_hidden):
+#   cells = [tf.nn.rnn_cell.LSTMCell(dim_input, dim_hidden, use_peepholes=False)
+#     for l in range(num_layer)]
+#   return tf.nn.rnn_cell.MultiRNNCell(cells)
 
 
-def one_layer_GRU(num_unit):
-  return tf.nn.rnn_cell.GRUCell(num_unit)
+# def one_layer_GRU(num_unit):
+#   return tf.nn.rnn_cell.GRUCell(num_unit)
 
 
-def multi_layer_GRU(num_layer, num_unit):
-  cells = [tf.nn.rnn_cell.GRUCell(num_unit) for l in range(num_layer)]
-  return tf.nn.rnn_cell.MultiRNNCell(cells)
+# def multi_layer_GRU(num_layer, num_unit):
+#   cells = [tf.nn.rnn_cell.GRUCell(num_unit) for l in range(num_layer)]
+#   return tf.nn.rnn_cell.MultiRNNCell(cells)

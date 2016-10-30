@@ -124,7 +124,7 @@ class TrnTst(object):
     avg_loss /= iter_num
     metrics['loss'] = avg_loss
 
-    metrics = self.predict_and_eval_in_val(sess, tst_reader, metrics)
+    self.predict_and_eval_in_val(sess, tst_reader, metrics)
 
     return metrics
 
