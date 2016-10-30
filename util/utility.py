@@ -102,9 +102,10 @@ def sample_top_word_decode(sess, states, wordids,
 
 
 # note: the addition_inputs remain same across different time steps
-def greedy_word_decode(sess, states, _states, _wordids, update_state_op, prob_op,
+def greedy_word_decode(
+    sess, states, _states, _wordids, update_state_op, prob_op, output_op,
     max_step, 
-    # input placeholders and input values for general attention mechanism 
+    # general attention mechanism 
     _last_output=None, init_output=None, addition_input_ops=[], addition_inputs=[]):
   batch_size = states.shape[0]
 
@@ -136,7 +137,8 @@ def greedy_word_decode(sess, states, _states, _wordids, update_state_op, prob_op
 
 # return sent_pool in shape (batch_size, sent_pool_size, 3)
 # last dimension: (loss, captionId, word_loss)
-def beamsearch_word_decode(sess, states, _states, _wordids, update_state_op, prob_op,
+def beamsearch_word_decode(
+    sess, states, _states, _wordids, update_state_op, prob_op, output_op,
     max_step, width, sent_pool_size, 
     # input placeholders and input values for general attention mechanism
     _last_outputs=None, init_output=None, addition_input_ops=[], addition_inputs=[]):
