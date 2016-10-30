@@ -1,22 +1,5 @@
 import tensorflow as tf
 
-# # Note: the concat operation leads to batch_size as the inner for loop and 
-# # max_words_in_caption - 1 as outer for loop
-# # <BOS> is not in the output, so need to delete the 1st word in _captionids and _caption_masks when calculating loss
-# # tricky, refer to figure.3 in paper "Show and Tell: A Neural Image Caption Generator" for details
-# def cross_entropy_loss_on_rnn_outputs(_captionids, _caption_masks, output_ops,
-#     softmax_W, softmax_B,
-#     basegraph, name_scope):
-#   with basegraph.as_default():
-#     with tf.variable_scope(name_scope):
-#       # ((max_words_in_caption-1)*batch_size, dim_hidden)
-#       output_ops = tf.concat(0, output_ops)
-#       # ((max_words_in_caption-1)*batch_size, num_words)
-#       logits = tf.nn.xw_plus_b(output_ops, softmax_W, softmax_B)
-      
-#       return cross_entropy_loss_on_rnn_logits(
-#         _captionids, _caption_masks, logits, basegraph, name_scope)
-
 
 # Note: the concat operation leads to batch_size as the inner for loop and 
 # max_words_in_caption - 1 as outer for loop
@@ -59,7 +42,7 @@ def lplq_norm_on_attention(attentions, mask_sum, p, q,
   return attention_completeness, attention_sparsity
 
 
-def robust_softmax(x, basegraph, name_scope, eps=1e-5):
-  x = tf.nn.softmax(x)
-  x = tf.minimum(tf.maximum(x, eps), 1.0-eps)
-  return x
+# def robust_softmax(x, basegraph, name_scope, eps=1e-5):
+#   x = tf.nn.softmax(x)
+#   x = tf.minimum(tf.maximum(x, eps), 1.0-eps)
+#   return x
