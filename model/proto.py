@@ -251,17 +251,52 @@ class ModelCombiner(FullModel):
   name_scope = 'ModelCombiner'
 
   def __init__(self, config):
-    FullModel.__init__(self, config)
+    self._config = config
     self._model_protos = self.get_model_proto()
+
+    self._init_op = tf.no_op()
+    self._saver = tf.no_op()
+    self._summary_op = tf.no_op()
+    self._loss_op = tf.no_op()
+    self._gradient_op = tf.no_op()
     self._train_ops = []
+    self._op2monitor = []
+
+  @property
+  def config(self):
+    return self._config
 
   @property
   def model_protos(self):
     return self._model_protos
 
   @property
+  def init_op(self):
+    return self._init_op
+
+  @property
+  def saver(self):
+    return self._saver
+
+  @property
+  def summary_op(self):
+    return self._summary_op
+
+  @property
+  def loss_op(self):
+    return self._loss_op
+
+  @property
+  def gradient_op(self):
+    return self._gradient_op
+
+  @property
   def train_ops(self):
     return self._train_ops
+
+  @property
+  def op2monitor(self):
+    return self._op2monitor
 
   ######################################
   # functions to customize
