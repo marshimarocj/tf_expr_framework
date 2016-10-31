@@ -122,8 +122,8 @@ def greedy_word_decode(
     if _last_output is not None:
       feed_dict[_last_output] = outputs
     num = len(addition_input_ops)
-    # for j in range(num):
-    #   feed_dict[addition_input_ops[j]] = addition_inputs[j]
+    for j in range(num):
+      feed_dict[addition_input_ops[j]] = addition_inputs[j]
 
     states, word_probs, outputs = sess.run(
       [update_state_op, prob_op, output_op],
