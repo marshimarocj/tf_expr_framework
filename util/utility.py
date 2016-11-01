@@ -311,21 +311,3 @@ def beamsearch_recover_one_caption(wordids, pre, ith, word_loss=None):
 
   return caption, caption_loss
 
-
-# def one_layer_LSTM(dim_input, dim_hidden):
-#   return tf.nn.rnn_cell.LSTMCell(dim_hidden, dim_input, use_peepholes=False)
-
-
-# def multi_layer_LSTM(num_layer, dim_input, dim_hidden):
-#   cells = [tf.nn.rnn_cell.LSTMCell(dim_input, dim_hidden, use_peepholes=False)
-#     for l in range(num_layer)]
-#   return tf.nn.rnn_cell.MultiRNNCell(cells)
-
-
-# def one_layer_GRU(num_unit):
-#   return tf.nn.rnn_cell.GRUCell(num_unit)
-
-
-# def multi_layer_GRU(num_layer, num_unit):
-#   cells = [tf.nn.rnn_cell.GRUCell(num_unit) for l in range(num_layer)]
-#   return tf.nn.rnn_cell.MultiRNNCell(cells)
