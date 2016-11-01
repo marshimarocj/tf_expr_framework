@@ -106,7 +106,7 @@ def greedy_word_decode(
     sess, states, _states, _wordids, update_state_op, prob_op, output_op,
     max_step, 
     _last_output=None, init_output=None, # general attention mechanism 
-    addition_input_placeholder=[], addition_inputs=[]): # input placeholders and input values 
+    addition_input_placeholders=[], addition_inputs=[]): # input placeholders and input values 
   batch_size = states.shape[0]
 
   # initialize start words <BOS>
@@ -141,7 +141,7 @@ def beamsearch_word_decode(
     sess, states, _states, _wordids, update_state_op, prob_op, output_op,
     max_step, width, sent_pool_size, 
     _last_outputs=None, init_output=None, # general attention mechanism
-    addition_input_placeholder=[], addition_inputs=[]): # input placeholders and input values 
+    addition_input_placeholders=[], addition_inputs=[]): # input placeholders and input values 
   batch_size = states.shape[0]
 
   # initialize start words <BOS>
