@@ -166,7 +166,7 @@ def beamsearch_word_decode(
       _states: states,
       _wordids: word_topk,
     }
-    print 'states:', state.shape
+    print 'states:', states.shape
     if _last_outputs is not None:
       feed_dict[_last_outputs] = outputs
     num = len(addition_input_placeholders)
