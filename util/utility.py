@@ -123,7 +123,7 @@ def greedy_word_decode(
       feed_dict[_last_output] = outputs
     num = len(addition_input_placeholder)
     for j in range(num):
-      feed_dict[addition_input_placeholder[j]] = addition_inputs[j]
+      feed_dict[addition_input_placeholders[j]] = addition_inputs[j]
 
     states, word_probs, outputs = sess.run(
       [update_state_op, prob_op, output_op],
@@ -167,10 +167,10 @@ def beamsearch_word_decode(
     }
     if _last_outputs is not None:
       feed_dict[_last_outputs] = outputs
-    num = len(addition_input_ops)
+    num = len(addition_input_placeholders)
     if i == 0:
       for j in range(num):
-        feed_dict[addition_input_ops[j]] = addition_inputs[j]
+        feed_dict[addition_input_placeholders[j]] = addition_inputs[j]
     else:
       for j in range(num):
         addition_input = addition_inputs[j]
@@ -179,7 +179,7 @@ def beamsearch_word_decode(
         expand_addition_input = np.zeros(tuple(shape), dtype=np.float32)
         for ib in xrange(batch_size):
           expand_addition_input[ib*width: (ib+1)*width] = addition_input[ib]
-        feed_dict[addition_input_ops[j]] = expand_addition_input
+        feed_dict[addition_input_placeholders[j]] = expand_addition_input
         
     states, prob, outputs = sess.run([update_state_op, prob_op, output_op],
       feed_dict=feed_dict)
