@@ -159,6 +159,7 @@ def beamsearch_word_decode(
  
   outputs = init_output 
   for i in xrange(0, max_step): # assume longest sentence <= max_step
+    print i, states.shape
     # state: (batch_size, state_units) if i == 0 else (batch_size*width, state_units)
     # word_topk: (batch_size,) if i == 0 else (batch_size*width,)
     feed_dict = {
