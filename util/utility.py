@@ -121,7 +121,7 @@ def greedy_word_decode(
     }
     if _last_output is not None:
       feed_dict[_last_output] = outputs
-    num = len(addition_input_placeholder)
+    num = len(addition_input_placeholders)
     for j in range(num):
       feed_dict[addition_input_placeholders[j]] = addition_inputs[j]
 
