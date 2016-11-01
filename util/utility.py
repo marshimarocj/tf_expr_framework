@@ -159,15 +159,13 @@ def beamsearch_word_decode(
  
   outputs = init_output 
   for i in xrange(0, max_step): # assume longest sentence <= max_step
-    print i
     # state: (batch_size, state_units) if i == 0 else (batch_size*width, state_units)
     # word_topk: (batch_size,) if i == 0 else (batch_size*width,)
     feed_dict = {
       _states: states,
       _wordids: word_topk,
     }
-    print 'states:', states.shape
-    
+
     num = len(addition_input_placeholders)
     if i == 0:
       if _last_outputs is not None:
@@ -191,7 +189,6 @@ def beamsearch_word_decode(
         for ib in xrange(batch_size):
           expand_addition_input[ib*width: (ib+1)*width] = addition_input[ib]
         feed_dict[addition_input_placeholders[j]] = expand_addition_input
-        print addition_input_placeholders[j].name, expand_addition_input.shape
         
     states, prob, outputs = sess.run([update_state_op, prob_op, output_op],
       feed_dict=feed_dict)
