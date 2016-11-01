@@ -105,8 +105,8 @@ def sample_top_word_decode(sess, states, wordids,
 def greedy_word_decode(
     sess, states, _states, _wordids, update_state_op, prob_op, output_op,
     max_step, 
-    # general attention mechanism 
-    _last_output=None, init_output=None, addition_input_ops=[], addition_inputs=[]):
+    _last_output=None, init_output=None, # general attention mechanism 
+    addition_input_placeholder=[], addition_inputs=[]): # input placeholders and input values 
   batch_size = states.shape[0]
 
   # initialize start words <BOS>
@@ -121,9 +121,9 @@ def greedy_word_decode(
     }
     if _last_output is not None:
       feed_dict[_last_output] = outputs
-    num = len(addition_input_ops)
+    num = len(addition_input_placeholder)
     for j in range(num):
-      feed_dict[addition_input_ops[j]] = addition_inputs[j]
+      feed_dict[addition_input_placeholder[j]] = addition_inputs[j]
 
     states, word_probs, outputs = sess.run(
       [update_state_op, prob_op, output_op],
@@ -140,8 +140,8 @@ def greedy_word_decode(
 def beamsearch_word_decode(
     sess, states, _states, _wordids, update_state_op, prob_op, output_op,
     max_step, width, sent_pool_size, 
-    # input placeholders and input values for general attention mechanism
-    _last_outputs=None, init_output=None, addition_input_ops=[], addition_inputs=[]):
+    _last_outputs=None, init_output=None, # general attention mechanism
+    addition_input_placeholder=[], addition_inputs=[]): # input placeholders and input values 
   batch_size = states.shape[0]
 
   # initialize start words <BOS>
