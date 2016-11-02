@@ -4,11 +4,15 @@ import tensorflow as tf
 
 
 class ProtoConfig(object):
-  def load(self, json_str):
-    data = json.loads(json_str)
-    for key in data:
+  # def load(self, json_str):
+  #   data = json.loads(json_str)
+  #   for key in data:
+  #     if key in self.__dict__:
+  #       setattr(self, key, data[key])
+  def load(self, cfg_dict):
+    for key in cfg_dict:
       if key in self.__dict__:
-        setattr(self, key, data[key])
+        setattr(self, key, cfg_dict[key])
 
 
 class FullModelConfig(object):
