@@ -166,22 +166,13 @@ def beamsearch_word_decode(
       _wordids: word_topk,
     }
 
+    if _last_outputs is not None:
+      feed_dict[_last_outputs] = outputs
     num = len(addition_input_placeholders)
-    if i == 0:
-      if _last_outputs is not None:
-        feed_dict[_last_outputs] = outputs
-
-      for j in range(num):
+    for j in range(num):
+      if i == 0:
         feed_dict[addition_input_placeholders[j]] = addition_inputs[j]
-    else:
-      if _last_outputs is not None:
-        expand_output = np.zeros((batch_size * width, outputs.shape[1]), dtype=np.float32)
-        for ib in xrange(batch_size):
-          expand_output[ib*width: (ib+1*width), :] = outputs[ib]
-        outputs = expand_output
-        feed_dict[_last_outputs] = expand_output
-
-      for j in range(num):
+      else:
         addition_input = addition_inputs[j]
         shape = list(addition_input.shape)
         shape[0] *= width
