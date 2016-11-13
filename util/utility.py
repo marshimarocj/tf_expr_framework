@@ -198,6 +198,12 @@ def beamsearch_word_decode(
         expand_state[ib*width: (ib+1)*width, :] = states[ib]
       states = expand_state
 
+      # expand outputs
+      expand_output = np.zeros((batch_size * width, outputs.shape[1]), dtype=np.float32)
+      for ib in xrange(batch_size):
+        expand_output[ib*width: (ib+1*width), :] = outputs[ib]
+      outputs = expand_output
+
       org_idx = np.arange(batch_size)
       org_idx = np.repeat(org_idx, width)
       org_idxs.append(org_idx)
