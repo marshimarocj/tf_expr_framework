@@ -67,9 +67,13 @@ class TrnTst(object):
   ######################################
   # functions to customize 
   ######################################
+  # def feed_data_and_run_train_summary_op_in_trn(self, data, sess):
+  def feed_data_and_trn(self, data, sess):
+    raise NotImplementedError("""please customize feed_data_and_trn""")
+
   # return summarystr
-  def feed_data_and_run_train_summary_op_in_trn(self, data, sess):
-    raise NotImplementedError("""please customize feed_data_and_run_train_summary_op_in_trn""")
+  def feed_data_and_summary(self, data, sess):
+    raise NotImplementedError("""please customize feed_data_and_summary""")
 
   # return loss value  
   def feed_data_and_run_loss_op_in_val(self, data, sess):
@@ -90,11 +94,13 @@ class TrnTst(object):
       sess, trn_reader, tst_reader, summarywriter, step, total_step, epoch):
     trn_batch_size = self.model_cfg.trn_batch_size
     for data in trn_reader.yield_trn_batch(trn_batch_size):
-      summarystr = self.feed_data_and_run_train_summary_op_in_trn(data, sess)
+      # summarystr = self.feed_data_and_run_train_summary_op_in_trn(data, sess)
+      self.feed_data_and_trn(data, sess)
 
       step += 1
 
       if step % self.model_cfg.summary_iter == 0:
+        self.feed_data_and_summary(data, sess)
         summarywriter.add_summary(summarystr, step)
 
       if step % self.model_cfg.val_iter == 0:
