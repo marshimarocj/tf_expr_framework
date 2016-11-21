@@ -105,7 +105,7 @@ class TrnTst(object):
 
       step += 1
 
-      if step % self.model_cfg.moniter_iter == 0:
+      if step % self.model_cfg.monitor_iter == 0:
         self.feed_data_and_monitor_in_trn(data, sess)
 
       if step % self.model_cfg.summary_iter == 0:
