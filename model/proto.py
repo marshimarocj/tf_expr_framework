@@ -16,7 +16,6 @@ class FullModelConfig(object):
     self.tst_batch_size = 128
     self.num_epoch = 100
     self.val_iter = 100
-    self.summary_iter = 10
     self.monitor_iter = 1
     self.learning_rate = 1e-4
     self.optimizer_alg = 'Adam' # Adam, SGD

@@ -107,10 +107,6 @@ class TrnTst(object):
 
       step += 1
 
-      if step % self.model_cfg.summary_iter == 0:
-        summarystr = self.feed_data_and_summary(data, sess)
-        summarywriter.add_summary(summarystr, step)
-
       if step % self.model_cfg.val_iter == 0:
         metrics = self._validation(sess, tst_reader)
 
@@ -118,6 +114,8 @@ class TrnTst(object):
         for key in metrics:
           self._logger.info('%s:%.4f', key, metrics[key])
 
+    summarystr = self.feed_data_and_summary(data, sess)
+    summarywriter.add_summary(summarystr, step)
     self.model.saver.save(
       sess, os.path.join(self.path_cfg.model_dir, 'epoch'), global_step=epoch)
 
