@@ -47,6 +47,17 @@ class ModelCombinerConfig(FullModelConfig):
 class ModelProto(object):
   name_scope = 'ModelProto'
 
+  def __init__(self, config):
+    self._config = config
+    self._op2monitor = {}
+
+  @property
+  def config(self):
+    return self._config
+
+  @property
+  def op2monitor(self):
+    return self._op2monitor
 
   ######################################
   # functions to customize
@@ -66,6 +77,9 @@ class ModelProto(object):
   # return basegraph 
   def add_reg(self, basegraph):
     raise NotImplementedError("""please cutomize ModelProto.add_reg""")
+
+  def append_op2monitor(self, name, op):
+    self._op2monitor[name] = op
 
 
 # FullModel: include trn and tst boilerpipe ops
@@ -100,7 +114,7 @@ class FullModel(object):
     self._loss_op = tf.no_op()
     self._gradient_op = tf.no_op()
     self._train_op = tf.no_op()
-    self._op2monitor = []
+    self._op2monitor = {}
 
   @property
   def config(self):
@@ -229,6 +243,9 @@ class FullModel(object):
 
     self._loss_op = self.add_loss(basegraph)
 
+    for key, val in self._model_proto.op2monitor:
+      self._op2monitor[key] = val
+
     with basegraph.as_default():
       with tf.variable_scope(self.name_scope):
         if self.config.optimizer_alg == 'Adam':
@@ -338,6 +355,10 @@ class ModelCombiner(FullModel):
     self.build_inference_graph_in_trn_tst(basegraph)
 
     self._loss_op = self.add_loss(basegraph)
+
+    for model_proto in self._model_protos:
+      for key, val in model_proto.op2monitor:
+        self._op2monitor[key] = val
 
     with basegraph.as_default():
       with tf.variable_scope(self.name_scope):
