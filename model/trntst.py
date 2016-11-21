@@ -71,6 +71,12 @@ class TrnTst(object):
   def feed_data_and_trn(self, data, sess):
     raise NotImplementedError("""please customize feed_data_and_trn""")
 
+  def feed_data_and_monitor_in_trn(self, data, sess):
+    raise NotImplementedError("""please customize feed_data_and_monitor""")
+
+  # def feed_data_and_monitor_in_tst(self, data, sess):
+  #   raise NotImplementedError("""please customize feed_data_and_monitor""")
+
   # return summarystr
   def feed_data_and_summary(self, data, sess):
     raise NotImplementedError("""please customize feed_data_and_summary""")
@@ -98,6 +104,9 @@ class TrnTst(object):
       self.feed_data_and_trn(data, sess)
 
       step += 1
+
+      if step % self.model_cfg.moniter_iter == 0:
+        self.feed_data_and_monitor_in_trn(data, sess)
 
       if step % self.model_cfg.summary_iter == 0:
         self.feed_data_and_summary(data, sess)

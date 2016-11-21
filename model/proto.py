@@ -4,11 +4,6 @@ import tensorflow as tf
 
 
 class ProtoConfig(object):
-  # def load(self, json_str):
-  #   data = json.loads(json_str)
-  #   for key in data:
-  #     if key in self.__dict__:
-  #       setattr(self, key, data[key])
   def load(self, cfg_dict):
     for key in cfg_dict:
       if key in self.__dict__:
@@ -22,6 +17,7 @@ class FullModelConfig(object):
     self.num_epoch = 100
     self.val_iter = 100
     self.summary_iter = 10
+    self.monitor_iter = 1
     self.learning_rate = 1e-4
     self.optimizer_alg = 'Adam' # Adam, SGD
 
@@ -171,13 +167,13 @@ class FullModel(object):
   # utility functions
   ######################################
   def append_op2monitor(self, name, op):
-    self._op2monitor.append((name, op))
+    self._op2monitor[name] = op
 
   ######################################
   # boilerpipe functions
   ######################################
   def op_in_trn(self):
-    return self.loss_op, self.train_op, self.summary_op
+    return self.loss_op, self.train_op
 
   def _add_init(self, basegraph):
     with basegraph.as_default():
@@ -266,7 +262,7 @@ class ModelCombiner(FullModel):
     self._loss_op = tf.no_op()
     self._gradient_op = tf.no_op()
     self._train_ops = []
-    self._op2monitor = []
+    self._op2monitor = {}
 
   @property
   def config(self):
@@ -367,4 +363,4 @@ class ModelCombiner(FullModel):
     return basegraph
 
   def op_in_trn(self):
-    return self.loss_op, self.train_ops, self.summary_op
+    return self.loss_op, self.train_ops
