@@ -355,9 +355,10 @@ class ModelCombiner(FullModel):
 
             weight = tf.get_collection(
               tf.GraphKeys.TRAINABLE_VARIABLES, model_proto.name_scope)
-            grads_and_weights = optimizer.compute_gradients(self.loss_op, weight)
-            self._gradient_op += grads_and_weights
-            self.train_ops.append(optimizer.apply_gradients(grads_and_weights))
+            if len(weight) > 0:
+              grads_and_weights = optimizer.compute_gradients(self.loss_op, weight)
+              self._gradient_op += grads_and_weights
+              self.train_ops.append(optimizer.apply_gradients(grads_and_weights))
 
     self._add_saver(basegraph)
     self._add_summary(basegraph)
