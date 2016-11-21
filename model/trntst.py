@@ -108,7 +108,7 @@ class TrnTst(object):
       step += 1
 
       if step % self.model_cfg.summary_iter == 0:
-        self.feed_data_and_summary(data, sess)
+        summarystr = self.feed_data_and_summary(data, sess)
         summarywriter.add_summary(summarystr, step)
 
       if step % self.model_cfg.val_iter == 0:
