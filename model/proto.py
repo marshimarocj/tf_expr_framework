@@ -243,8 +243,9 @@ class FullModel(object):
 
     self._loss_op = self.add_loss(basegraph)
 
-    for key, val in self._model_proto.op2monitor:
-      self._op2monitor[key] = val
+    op2monitor = self._model_proto.op2monitor
+    for key in op2monitor:
+      self._op2monitor[key] = op2monitor[val]
 
     with basegraph.as_default():
       with tf.variable_scope(self.name_scope):
@@ -357,8 +358,9 @@ class ModelCombiner(FullModel):
     self._loss_op = self.add_loss(basegraph)
 
     for model_proto in self._model_protos:
-      for key, val in model_proto.op2monitor:
-        self._op2monitor[key] = val
+      op2monitor = model_proto.op2monitor
+      for key in op2monitor:
+        self._op2monitor[key] = op2monitor[key]
 
     with basegraph.as_default():
       with tf.variable_scope(self.name_scope):
