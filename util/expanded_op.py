@@ -42,7 +42,8 @@ def lplq_norm_on_attention(attentions, mask_sum, p, q,
   return attention_completeness, attention_sparsity
 
 
-# def robust_softmax(x, basegraph, name_scope, eps=1e-5):
-#   x = tf.nn.softmax(x)
-#   x = tf.minimum(tf.maximum(x, eps), 1.0-eps)
-#   return x
+def gpu_embedding_lookup(embedding_W, ids, num_words):
+  one_hots = tf.one_hot(num_words, ids) # (len(ids), num_words)
+
+  embeds = tf.matmul(one_hots, embedding_W)
+  return tf.transpose(embeds)
