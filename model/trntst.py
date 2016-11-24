@@ -3,7 +3,6 @@ import sys
 import time
 import cPickle
 import collections
-import time
 import json
 sys.path.append('../')
 
@@ -99,6 +98,7 @@ class TrnTst(object):
   def _iterate_epoch(self,
       sess, trn_reader, tst_reader, summarywriter, step, total_step, epoch):
     trn_batch_size = self.model_cfg.trn_batch_size
+    trn_time = time.time()
     for data in trn_reader.yield_trn_batch(trn_batch_size):
       if step % self.model_cfg.monitor_iter == 0:
         self.feed_data_and_monitor_in_trn(data, sess, step)
@@ -108,11 +108,16 @@ class TrnTst(object):
       step += 1
 
       if step % self.model_cfg.val_iter == 0:
+        val_time = time.time()
         metrics = self._validation(sess, tst_reader)
+        _end_time = time.time()
 
         self._logger.info('step (%d/%d)', step, total_step)
+        self._logger.info('%f s for trn', _end_time - trn_time)
+        self._logger.info('%f s for val', _end_time - val_time)
         for key in metrics:
           self._logger.info('%s:%.4f', key, metrics[key])
+        trn_time = time.time()
 
     summarystr = self.feed_data_and_summary(data, sess)
     summarywriter.add_summary(summarystr, step)
