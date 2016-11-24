@@ -113,7 +113,7 @@ class TrnTst(object):
         _end_time = time.time()
 
         self._logger.info('step (%d/%d)', step, total_step)
-        self._logger.info('%f s for trn', _end_time - trn_time)
+        self._logger.info('%f s for trn', val_time - trn_time)
         self._logger.info('%f s for val', _end_time - val_time)
         for key in metrics:
           self._logger.info('%s:%.4f', key, metrics[key])
