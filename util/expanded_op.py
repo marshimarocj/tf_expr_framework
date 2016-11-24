@@ -40,10 +40,3 @@ def lplq_norm_on_attention(attentions, mask_sum, p, q,
       attention_sparsity = tf.reduce_sum(attention_sparsity) / mask_sum
 
   return attention_completeness, attention_sparsity
-
-
-def gpu_embedding_lookup(embedding_W, ids, num_words):
-  one_hots = tf.one_hot(num_words, ids) # (len(ids), num_words)
-
-  embeds = tf.matmul(one_hots, embedding_W)
-  return tf.transpose(embeds)
