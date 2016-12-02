@@ -170,9 +170,11 @@ class FullModel(object):
   def add_loss(self, basegraph):
     raise NotImplementedError("""please customize FullModel.add_loss""")
 
+  # return a dictionary of ops
   def op_in_val(self):
     raise NotImplementedError("""please customize FullModel.op_in_val""")
 
+  # return a dictionary of ops
   def op_in_tst(self):
     raise NotImplementedError("""please customize FullModel.op_in_tst""")
 
@@ -186,7 +188,11 @@ class FullModel(object):
   # boilerpipe functions
   ######################################
   def op_in_trn(self):
-    return self.loss_op, self.train_op
+    # return self.loss_op, self.train_op
+    return {
+      'loss_op': self.loss_op, 
+      'train_op': self.train_op,
+    }
 
   def _add_init(self, basegraph):
     with basegraph.as_default():
@@ -385,4 +391,7 @@ class ModelCombiner(FullModel):
     return basegraph
 
   def op_in_trn(self):
-    return self.loss_op, self.train_ops
+    return {
+      'loss_op': self.loss_op,
+      'train_ops': self.train_ops,
+    }

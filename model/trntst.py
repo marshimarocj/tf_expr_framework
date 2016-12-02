@@ -26,10 +26,13 @@ class PathCfg(object):
     for key in data:
       setattr(self, key, data[key])
 
+
 # note: 
 #   please look at examples to get an idea of what to implement in each function
 # functions to implement:
-#   feed_data_and_run_train_summary_op_in_trn,
+#   feed_data_and_trn,
+#   feed_data_and_monitor_in_trn,
+#   feed_data_and_summary,
 #   feed_data_and_run_loss_op_in_val,
 #   predict_and_eval_in_val
 #   predict_in_tst
@@ -66,15 +69,11 @@ class TrnTst(object):
   ######################################
   # functions to customize 
   ######################################
-  # def feed_data_and_run_train_summary_op_in_trn(self, data, sess):
   def feed_data_and_trn(self, data, sess):
     raise NotImplementedError("""please customize feed_data_and_trn""")
 
   def feed_data_and_monitor_in_trn(self, data, sess, step):
     raise NotImplementedError("""please customize feed_data_and_monitor""")
-
-  # def feed_data_and_monitor_in_tst(self, data, sess):
-  #   raise NotImplementedError("""please customize feed_data_and_monitor""")
 
   # return summarystr
   def feed_data_and_summary(self, data, sess):
