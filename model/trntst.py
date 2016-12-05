@@ -99,7 +99,7 @@ class TrnTst(object):
     trn_batch_size = self.model_cfg.trn_batch_size
     trn_time = time.time()
     for data in trn_reader.yield_trn_batch(trn_batch_size):
-      if step % self.model_cfg.monitor_iter == 0:
+      if self.model_cfg.monitor_iter > 0 and step % self.model_cfg.monitor_iter == 0:
         self.feed_data_and_monitor_in_trn(data, sess, step)
 
       self.feed_data_and_trn(data, sess)
