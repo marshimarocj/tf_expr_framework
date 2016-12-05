@@ -106,7 +106,7 @@ class TrnTst(object):
 
       step += 1
 
-      if step % self.model_cfg.val_iter == 0:
+      if self.model_cfg.val_iter > 0 and step % self.model_cfg.val_iter == 0:
         val_time = time.time()
         metrics = self._validation(sess, tst_reader)
         _end_time = time.time()
