@@ -15,7 +15,7 @@ class CaptionInt2str(object):
     self.int2word = []
 
     self.int2word = cPickle.load(file(int2word_file))
-    print len(self.int2word)
+    # print len(self.int2word)
 
   # captionInt should be a batch of captionInts
   def __call__(self, captionid):
@@ -30,8 +30,8 @@ class CaptionInt2str(object):
         elif t == EOS:
           break
         else:
-          if t >= len(self.int2word):
-            print t
+          # if t >= len(self.int2word):
+          #   print t
           sent.append(self.int2word[t])
       captionStr.append(' '.join(sent))
 
