@@ -15,6 +15,7 @@ class CaptionInt2str(object):
     self.int2word = []
 
     self.int2word = cPickle.load(file(int2word_file))
+    print len(self.int2word)
 
   # captionInt should be a batch of captionInts
   def __call__(self, captionid):
@@ -29,6 +30,8 @@ class CaptionInt2str(object):
         elif t == EOS:
           break
         else:
+          if t >= len(self.int2word):
+            print t
           sent.append(self.int2word[t])
       captionStr.append(' '.join(sent))
 
@@ -151,13 +154,23 @@ def beamsearch_word_decode(
   wordids = []
   pres = []
   word_losses = []
-  org_idxs = [] # mark original idx in current beam, useful for expanding addition_inputs
   # sum log probability for each beams
   log_probs = np.zeros((batch_size * width, ), dtype=np.float32)
   # exist beams for each input feature
   batch_sent_pool_remain_cnt = np.zeros((batch_size,), dtype=np.float32) + sent_pool_size
+
+  # expand addition_input for beam search from step 1, excluding step 0
+  expand_addition_inputs = []
+  for j in range(num):
+    addition_input = addition_inputs[j]
+    shape = list(addition_input.shape)
+    shape[0] *= width
+    expand_addition_input = np.zeros(tuple(shape), dtype=np.float32)
+    for ib in xrange(batch_size):
+      expand_addition_input[ib*width: (ib+1)*width] = addition_input[ib]
+    expand_addition_inputs.append(expand_addition_input)
  
-  outputs = init_output 
+  outputs = init_output
   for i in xrange(0, max_step): # assume longest sentence <= max_step
     # state: (batch_size, state_units) if i == 0 else (batch_size*width, state_units)
     # word_topk: (batch_size,) if i == 0 else (batch_size*width,)
@@ -173,13 +186,14 @@ def beamsearch_word_decode(
       if i == 0:
         feed_dict[addition_input_placeholders[j]] = addition_inputs[j]
       else:
-        addition_input = addition_inputs[j]
-        shape = list(addition_input.shape)
-        shape[0] *= width
-        expand_addition_input = np.zeros(tuple(shape), dtype=np.float32)
-        for ib in xrange(batch_size):
-          expand_addition_input[ib*width: (ib+1)*width] = addition_input[ib]
-        feed_dict[addition_input_placeholders[j]] = expand_addition_input
+        # addition_input = addition_inputs[j]
+        # shape = list(addition_input.shape)
+        # shape[0] *= width
+        # expand_addition_input = np.zeros(tuple(shape), dtype=np.float32)
+        # for ib in xrange(batch_size):
+        #   expand_addition_input[ib*width: (ib+1)*width] = addition_input[ib]
+        # feed_dict[addition_input_placeholders[j]] = expand_addition_input
+        feed_dict[addition_input_placeholders[j]] = expand_addition_inputs[j]
         
     states, prob, outputs = sess.run([update_state_op, prob_op, output_op],
       feed_dict=feed_dict)
@@ -203,10 +217,6 @@ def beamsearch_word_decode(
       for ib in xrange(batch_size):
         expand_output[ib*width: (ib+1*width), :] = outputs[ib]
       outputs = expand_output
-
-      org_idx = np.arange(batch_size)
-      org_idx = np.repeat(org_idx, width)
-      org_idxs.append(org_idx)
 
       word_topk = word_topk.flatten()
       log_probs = np.log(prob_topk.flatten())
@@ -234,9 +244,6 @@ def beamsearch_word_decode(
       topk_indices = topk_indices.flatten() # shape=(batch_size*width,)
       topk_pre_indices = topk_indices // width # shape=(batch_size*width,)
       states = states[topk_pre_indices]
-
-      org_idx = org_idxs[-1][topk_pre_indices]
-      org_idxs.append(org_idx)
 
       # reshape to (batch_size*width*width, ) for topK selection
       word_topk2 = word_topk2.flatten()
