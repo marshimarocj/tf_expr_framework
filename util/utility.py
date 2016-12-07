@@ -161,6 +161,7 @@ def beamsearch_word_decode(
 
   # expand addition_input for beam search from step 1, excluding step 0
   expand_addition_inputs = []
+  num = len(addition_input_placeholders)
   for j in range(num):
     addition_input = addition_inputs[j]
     shape = list(addition_input.shape)
@@ -181,7 +182,6 @@ def beamsearch_word_decode(
 
     if _last_outputs is not None:
       feed_dict[_last_outputs] = outputs
-    num = len(addition_input_placeholders)
     for j in range(num):
       if i == 0:
         feed_dict[addition_input_placeholders[j]] = addition_inputs[j]
