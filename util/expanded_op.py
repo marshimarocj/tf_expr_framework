@@ -5,17 +5,14 @@ import tensorflow as tf
 # max_words_in_caption - 1 as outer for loop
 # <BOS> is not in the output, so need to delete the 1st word in _captionids and _caption_masks when calculating loss
 # tricky, refer to figure.3 in paper "Show and Tell: A Neural Image Caption Generator" for details
-def cross_entropy_loss_on_rnn_logits(_captionids, _caption_masks, logits,
-    basegraph, name_scope):
-  with basegraph.as_default():
-    with tf.variable_scope(name_scope):
-      # align shape to logits: ((max_words_in_caption-1)*batch_size,)
-      labels = tf.reshape(tf.transpose(_captionids[:, 1:]), (-1,))
-      # (max_words_in_caption-1)*batch_size, )
-      label_masks = tf.reshape(tf.transpose(_caption_masks[:, 1:]), (-1, ))
-      cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, labels)
+def cross_entropy_loss_on_rnn_logits(_captionids, _caption_masks, logits):
+  # align shape to logits: ((max_words_in_caption-1)*batch_size,)
+  labels = tf.reshape(tf.transpose(_captionids[:, 1:]), (-1,))
+  # (max_words_in_caption-1)*batch_size, )
+  label_masks = tf.reshape(tf.transpose(_caption_masks[:, 1:]), (-1, ))
+  cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, labels)
 
-      loss_op = tf.reduce_sum(cross_entropy * label_masks) / tf.reduce_sum(label_masks)
+    loss_op = tf.reduce_sum(cross_entropy * label_masks) / tf.reduce_sum(label_masks)
 
   return loss_op
 
