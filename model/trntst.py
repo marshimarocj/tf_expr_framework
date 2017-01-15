@@ -146,7 +146,7 @@ class TrnTst(object):
 
   def train(self, trn_reader, tst_reader, memory_fraction=1.0, resume=False):
     batch_size = self.model_cfg.trn_batch_size
-    batches_per_epoch = (trn_reader.num_caption + batch_size - 1) / batch_size
+    batches_per_epoch = (trn_reader.num_record() + batch_size - 1) / batch_size
     total_step = batches_per_epoch * self.model_cfg.num_epoch
 
     trn_tst_graph = self.model.build_trn_tst_graph()
@@ -186,8 +186,6 @@ class TrnTst(object):
       cPickle.dump(metric_history, open(val_metric_file, 'w'))
 
   def test(self, tst_reader, memory_fraction=1.0):
-    batch_size = self.model_cfg.tst_batch_size
-
     tst_graph = self.model.build_tst_graph()
     gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=memory_fraction)
     config_proto = tf.ConfigProto(gpu_options=gpu_options)
