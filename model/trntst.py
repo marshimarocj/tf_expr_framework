@@ -176,6 +176,7 @@ class TrnTst(object):
           sess, trn_reader, tst_reader, summarywriter, step, total_step, base_epoch + epoch)
 
         metrics = self._validation(sess, tst_reader)
+        metrics['epoch'] = epoch
         metric_history.append(metrics)
 
         self._logger.info('epoch (%d/%d)', epoch, self.model_cfg.num_epoch)
