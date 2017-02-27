@@ -161,7 +161,7 @@ class TrnTst(object):
         base_epoch = int(data[-1]) + 1
       else:
         base_epoch = 0
-      summarywriter = tf.train.SummaryWriter(self.path_cfg.log_dir, graph=sess.graph)
+      summarywriter = tf.summary.FileWriter(self.path_cfg.log_dir, graph=sess.graph)
 
       # round 0, just for quick checking
       metrics = self._validation(sess, tst_reader)

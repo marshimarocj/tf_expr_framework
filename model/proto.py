@@ -197,18 +197,18 @@ class FullModel(object):
   def _add_init(self, basegraph):
     with basegraph.as_default():
       with tf.variable_scope(self.name_scope):
-        self._init_op = tf.initialize_all_variables()
+        self._init_op = tf.global_variables_initializer()
 
   def _add_summary(self, basegraph):
     with basegraph.as_default():
       with tf.variable_scope(self.name_scope):
-        tf.scalar_summary('loss', self._loss_op)
+        tf.summary.scalar('loss', self._loss_op)
         for var in tf.trainable_variables():
-          tf.histogram_summary(var.name + '/activations', var)
+          tf.summary.histogram(var.name + '/activations', var)
         for grad, var in self.gradient_op:
           if grad is not None:
-            tf.histogram_summary(var.name + '/gradients', grad)
-        self._summary_op = tf.merge_all_summaries()
+            tf.summary.histogram(var.name + '/gradients', grad)
+        self._summary_op = tf.summary.merge_all()
 
   def _build_parameter_graph(self, basegraph):
     self.model_proto.build_parameter_graph(basegraph)

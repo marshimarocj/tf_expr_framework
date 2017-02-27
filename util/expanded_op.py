@@ -10,7 +10,7 @@ def cross_entropy_loss_on_rnn_logits(_captionids, _caption_masks, logits):
   labels = tf.reshape(tf.transpose(_captionids[:, 1:]), (-1,))
   # (max_words_in_caption-1)*batch_size, )
   label_masks = tf.reshape(tf.transpose(_caption_masks[:, 1:]), (-1, ))
-  cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, labels)
+  cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=labels)
 
   loss_op = tf.reduce_sum(cross_entropy * label_masks) / tf.reduce_sum(label_masks)
 
