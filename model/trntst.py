@@ -7,6 +7,7 @@ import json
 sys.path.append('../')
 
 import tensorflow as tf
+from tensorflow.python import debug as tf_debug
 
 import toolkit
 
@@ -42,11 +43,12 @@ class PathCfg(object):
 #   train
 #   test
 class TrnTst(object):
-  def __init__(self, model_cfg, path_cfg, model):
+  def __init__(self, model_cfg, path_cfg, model, debug=False):
     self._model_cfg = None
     self._path_cfg = None
     self._model = None
     self._logger = None
+    self._debug = debug
 
     self._model_cfg = model_cfg
     self._path_cfg = path_cfg
@@ -153,6 +155,9 @@ class TrnTst(object):
     gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=memory_fraction)
     configProto = tf.ConfigProto(gpu_options=gpu_options)
     with tf.Session(graph=trn_tst_graph, config=configProto) as sess:
+      if self._debug:
+        sess = tf_debug.LocalCLIDebugWrapperSession(sess)
+        sess.add_tensor_filter("has_inf_or_nan", tf_debug.has_inf_or_nan)
       sess.run(self.model.init_op)
       if resume:
         self.model.saver.restore(sess, self.path_cfg.model_file)
@@ -191,6 +196,9 @@ class TrnTst(object):
     gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=memory_fraction)
     config_proto = tf.ConfigProto(gpu_options=gpu_options)
     with tf.Session(graph=tst_graph, config=config_proto) as sess:
+      if self._debug:
+        sess = tf_debug.LocalCLIDebugWrapperSession(sess)
+        sess.add_tensor_filter("has_inf_or_nan", tf_debug.has_inf_or_nan)
       sess.run(self.model.init_op)
       self.model.saver.restore(sess, self.path_cfg.model_file)
 
