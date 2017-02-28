@@ -137,8 +137,6 @@ class FullModel(object):
 
   @property
   def loss_op(self):
-    if self._loss_op.type == 'NoOp':
-      raise NotImplementedError("""please implement model.proto.FullModel.loss_op""")
     return self._loss_op
 
   @property
