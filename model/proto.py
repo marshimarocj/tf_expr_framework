@@ -255,7 +255,7 @@ class FullModel(object):
     with basegraph.as_default():
       with tf.variable_scope(self.name_scope):
         global_step = tf.Variable(0, name='global_step', trainable=False)
-        if self.config_decay_schema == '':
+        if self.config.decay_schema == '':
           learning_rate = self.config.learning_rate
         else:
           learning_rate = tf.train.piecewise_constant(
@@ -380,7 +380,7 @@ class ModelCombiner(FullModel):
         self._gradient_ops = []
         for m, model_proto in enumerate(self.model_protos):
           if not self.config.stop_gradients[m]:
-            if self.config_decay_schema == '':
+            if self.config.decay_schema == '':
               learning_rate = self.config.learning_rates[m]
             else:
               learning_rate = tf.train.piecewise_constant(
