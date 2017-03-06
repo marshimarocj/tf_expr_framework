@@ -19,6 +19,9 @@ class FullModelConfig(object):
     self.monitor_iter = 1
     self.learning_rate = 1e-4
     self.optimizer_alg = 'Adam' # Adam, SGD
+    self.decay_schema = '' # , piecewise_constant
+    self.decay_boundarys = []
+    self.decay_values = []
 
   def load(self, file):
     data = json.load(open(file))
@@ -139,9 +142,9 @@ class FullModel(object):
   def loss_op(self):
     return self._loss_op
 
-  @property
-  def gradient_op(self):
-    return self._gradient_op
+  # @property
+  # def gradient_op(self):
+  #   return self._gradient_op
 
   @property
   def train_op(self):
@@ -186,7 +189,6 @@ class FullModel(object):
   # boilerpipe functions
   ######################################
   def op_in_trn(self):
-    # return self.loss_op, self.train_op
     return {
       'loss_op': self.loss_op, 
       'train_op': self.train_op,
@@ -236,7 +238,7 @@ class FullModel(object):
 
     return basegraph 
 
-  def build_trn_tst_graph(self):
+  def build_trn_tst_graph(self, decay_boundarys=[]):
     basegraph = tf.Graph()
 
     self._build_parameter_graph(basegraph)
@@ -252,12 +254,19 @@ class FullModel(object):
 
     with basegraph.as_default():
       with tf.variable_scope(self.name_scope):
+        global_step = tf.Variable(0, name='global_step', trainable=False)
+        if self.config_decay_schema == '':
+          learning_rate = self.config.learning_rate
+        else:
+          learning_rate = tf.train.piecewise_constant(
+            global_step, decay_boundarys, self.config.decay_values)
+
         if self.config.optimizer_alg == 'Adam':
-          optimizer = tf.train.AdamOptimizer(self.config.learning_rate)
+          optimizer = tf.train.AdamOptimizer(learning_rate)
         elif self.config.optimizer_alg == 'SGD':
-          optimizer = tf.train.GradientDescentOptimizer(self.config.learning_rate)
+          optimizer = tf.train.GradientDescentOptimizer(learning_rate)
         self._gradient_op = optimizer.compute_gradients(self._loss_op)
-        self._train_op = optimizer.apply_gradients(self._gradient_op)
+        self._train_op = optimizer.apply_gradients(self._gradient_op, global_step=global_step)
 
     self._add_saver(basegraph)
     self._add_summary(basegraph)
@@ -281,7 +290,7 @@ class ModelCombiner(FullModel):
     self._saver = tf.no_op()
     self._summary_op = tf.no_op()
     self._loss_op = tf.no_op()
-    self._gradient_op = tf.no_op()
+    self._gradient_ops = []
     self._train_ops = []
     self._op2monitor = {}
 
@@ -309,9 +318,9 @@ class ModelCombiner(FullModel):
   def loss_op(self):
     return self._loss_op
 
-  @property
-  def gradient_op(self):
-    return self._gradient_op
+  # @property
+  # def gradient_ops(self):
+  #   return self._gradient_ops
 
   @property
   def train_ops(self):
@@ -350,7 +359,7 @@ class ModelCombiner(FullModel):
 
     return basegraph
 
-  def build_trn_tst_graph(self):
+  def build_trn_tst_graph(self, decay_boundarys=[]):
     basegraph = tf.Graph()
 
     self._build_parameter_graph(basegraph)
@@ -367,20 +376,27 @@ class ModelCombiner(FullModel):
 
     with basegraph.as_default():
       with tf.variable_scope(self.name_scope):
-        self._gradient_op = []
+        global_step = tf.Variable(0, name='global_step', trainable=False)
+        self._gradient_ops = []
         for m, model_proto in enumerate(self.model_protos):
           if not self.config.stop_gradients[m]:
+            if self.config_decay_schema == '':
+              learning_rate = self.config.learning_rates[m]
+            else:
+              learning_rate = tf.train.piecewise_constant(
+                global_step, decay_boundarys, self.config.decay_values)
+
             if self.config.optimizer_alg == 'Adam':
-              optimizer = tf.train.AdamOptimizer(self.config.learning_rates[m])
+              optimizer = tf.train.AdamOptimizer(learning_rate)
             elif self.config.optimizer_alg == 'SGD':
-              optimizer = tf.train.GradientDescentOptimizer(self.config.learning_rates[m])
+              optimizer = tf.train.GradientDescentOptimizer(learning_rate)
 
             weight = tf.get_collection(
               tf.GraphKeys.TRAINABLE_VARIABLES, model_proto.name_scope)
             if len(weight) > 0:
               grads_and_weights = optimizer.compute_gradients(self.loss_op, weight)
-              self._gradient_op += grads_and_weights
-              self.train_ops.append(optimizer.apply_gradients(grads_and_weights))
+              self._gradient_ops.append(grads_and_weights)
+              self._train_ops.append(optimizer.apply_gradients(grads_and_weights))
 
     self._add_saver(basegraph)
     self._add_summary(basegraph)

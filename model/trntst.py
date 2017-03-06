@@ -54,7 +54,8 @@ class TrnTst(object):
     self._path_cfg = path_cfg
     self._model = model
 
-    self._logger = toolkit.set_logger('TrnTst%f'%time.time(), path_cfg.log_file)
+    # self._logger = toolkit.set_logger('TrnTst%f'%time.time(), path_cfg.log_file)
+    self._logger = toolkit.set_logger('TrnTst', path_cfg.log_file)
 
   @property
   def model_cfg(self):
@@ -151,7 +152,12 @@ class TrnTst(object):
     batches_per_epoch = (trn_reader.num_record() + batch_size - 1) / batch_size
     total_step = batches_per_epoch * self.model_cfg.num_epoch
 
-    trn_tst_graph = self.model.build_trn_tst_graph()
+    decay_boundarys = []
+    if self.model_cfg.decay_schema == 'piecewise_constant':
+      decay_boundarys = self.model_cfg.decay_boundarys
+      decay_boundarys = [int(d*total_step) for d in decay_boundarys]
+    trn_tst_graph = self.model.build_trn_tst_graph(decay_boundarys=decay_boundarys)
+
     gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=memory_fraction)
     configProto = tf.ConfigProto(gpu_options=gpu_options)
     with tf.Session(graph=trn_tst_graph, config=configProto) as sess:
