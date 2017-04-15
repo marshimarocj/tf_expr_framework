@@ -54,7 +54,6 @@ class TrnTst(object):
     self._path_cfg = path_cfg
     self._model = model
 
-    # self._logger = toolkit.set_logger('TrnTst%f'%time.time(), path_cfg.log_file)
     self._logger = toolkit.set_logger('TrnTst', path_cfg.log_file)
 
   @property
@@ -187,7 +186,7 @@ class TrnTst(object):
           sess, trn_reader, tst_reader, summarywriter, step, total_step, base_epoch + epoch)
 
         metrics = self._validation(sess, tst_reader)
-        metrics['epoch'] = epoch
+        metrics['epoch'] = base_epoch + epoch
         metric_history.append(metrics)
 
         self._logger.info('epoch (%d/%d)', epoch, self.model_cfg.num_epoch)
