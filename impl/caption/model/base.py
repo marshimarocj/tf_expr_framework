@@ -239,12 +239,10 @@ def predict_eval_in_val(trntst, sess, tst_reader, metrics):
 
   batch_size = trntst.model_cfg.tst_batch_size
   for data in tst_reader.yield_tst_batch(batch_size):
-    encoder_feed_dict = trntst._construct_encoder_feed_dict_in_tst(data)
-    states = sess.run(
-      op_dict['decoder.tst_ft_state_op'], feed_dict=encoder_feed_dict)
-
-    decoder_feed_dict = trntst._construct_decoder_feed_dict_in_tst(data)
-    sent_pool = sess.run(op_dict['decoder.output_ops'], feed_dict=decoder_feed_dict)
+    feed_dict = trntst._construct_encoder_feed_dict_in_tst(data)
+    feed_dict.update(trntst._construct_decoder_feed_dict_in_tst(data))
+    sent_pool = sess.run(
+      op_dict['decoder.output_ops'], feed_dict=feed_dict)
     sent_pool = np.array(sent_pool).T
 
     for k, sent in enumerate(sent_pool):
@@ -270,12 +268,10 @@ def predict_in_tst(trntst, sess, tst_reader, predict_file):
   max_words_in_caption = trntst.model_cfg.decoder_cfg.max_words_in_caption
 
   for data in tst_reader.yield_tst_batch(trntst.model_cfg.tst_batch_size):
-    encoder_feed_dict = trntst._construct_encoder_feed_dict_in_tst(data)
-    states = sess.run(
-      op_dict['decoder.tst_ft_state_op'], feed_dict=encoder_feed_dict)
-
-    decoder_feed_dict = trntst._construct_decoder_feed_dict_in_tst(data)
-    sent_pool = sess.run(op_dict['decoder.output_ops'], feed_dict=decoder_feed_dict)
+    feed_dict = trntst._construct_encoder_feed_dict_in_tst(data)
+    feed_dict.update(trntst._construct_decoder_feed_dict_in_tst(data))
+    sent_pool = sess.run(
+      op_dict['decoder.output_ops'], feed_dict=feed_dict)
     sent_pool = np.array(sent_pool).T
 
     for k, sent in enumerate(sent_pool):
