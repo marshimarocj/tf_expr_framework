@@ -98,20 +98,20 @@ class TrnTst(base.TrnTstBase):
     caption_masks = data[2]
 
     batch_size = fts.shape[0]
-    decoder = self.framework.model.model_protos[1]
+    decoder = self.model.model_protos[1]
     state_init = [
       np.zeros((batch_size, state_size), dtype=np.float)
-        for state_size in nest.flatten(framework.impl.caption.decoder.state_size)
+        for state_size in nest.flatten(decoder.state_size)
     ]
     init_wordids = np.zeros((batch_size,), dtype=np.int32)
 
     keys = [
-        self.framework.model._fts, 
-        self.framework.model._captionids, 
-        self.framework.model._caption_masks, 
-        self.framework.model._init_wordids
+        self.model._fts, 
+        self.model._captionids, 
+        self.model._caption_masks, 
+        self.model._init_wordids
       ]
-    keys += nest.flatten(self.framework.model._init_state)
+    keys += nest.flatten(self.model._init_state)
     values = [fts, captionids, caption_masks, init_wordids] + state_init
 
     return dict(zip(keys, values))
@@ -120,15 +120,15 @@ class TrnTst(base.TrnTstBase):
     fts = data
 
     batch_size = fts.shape[0]
-    decoder = self.framework.model.model_protos[1]
+    decoder = self.model.model_protos[1]
     state_init = [
       np.zeros((batch_size, state_size), dtype=np.float)
       for state_size in nest.flatten(framework.impl.caption.decoder.state_size)
     ]
     init_wordids = np.zeros((batch_size,), dtype=np.int32)
 
-    keys = [self.framework.model._fts, self.framework.model._init_wordids]
-    keys += nest.flatten(self.framework.model._init_state)
+    keys = [self.model._fts, self.model._init_wordids]
+    keys += nest.flatten(self.model._init_state)
     values = [fts, init_wordids] + state_init
 
     return dict(zip(keys, values))
@@ -153,10 +153,10 @@ class TrnTstHiddenSet(TrnTst):
     init_wordids = np.zeros((batch_size,), dtype=np.int32)
 
     return {
-      self.framework.model._fts: fts,
-      self.framework.model._captionids: captionids,
-      self.framework.model._caption_masks: caption_masks,
-      self.framework.model._init_wordids: init_wordids,
+      self.model._fts: fts,
+      self..model._captionids: captionids,
+      self.model._caption_masks: caption_masks,
+      self.model._init_wordids: init_wordids,
     }
 
   # @override
@@ -166,8 +166,8 @@ class TrnTstHiddenSet(TrnTst):
     init_wordids = np.zeros((batch_size,), dtype=np.int32)
 
     return {
-      self.framework.model._fts: fts,
-      self.framework.model._init_wordids: init_wordids,
+      self.model._fts: fts,
+      self.model._init_wordids: init_wordids,
     }
 
 
