@@ -2,8 +2,9 @@ import os
 import sys
 import json
 import cPickle
-# sys.path.append('../')
+sys.path.append('../')
 sys.path.append('../../../')
+print os.path.abspath('../../../')
 
 import tensorflow as tf
 from tensorflow.python.util import nest
