@@ -105,7 +105,7 @@ class EncoderDecoderBase(framework.model.proto.ModelCombiner):
 
     return {
       'loss_op': self.loss_op,
-      'decoder.tst_ft_state_op': decoder.tst_ft_state_op,
+      'decoder.tst_ft_state_op': decoder.tst_ft_state,
       'decoder.predict_prob_ops': decoder.predict_prob_ops,
       'decoder.output_ops': decoder.output_ops,
     }
@@ -115,7 +115,7 @@ class EncoderDecoderBase(framework.model.proto.ModelCombiner):
     decoder = self.model_protos[1]
 
     return {
-      'decoder.tst_ft_state_op': decoder.tst_ft_state_op,
+      'decoder.tst_ft_state_op': decoder.tst_ft_state,
       'decoder.predict_prob_ops': decoder.predict_prob_ops,
       'decoder.output_ops': decoder.output_ops,
     }
