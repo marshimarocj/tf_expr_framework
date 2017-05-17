@@ -2,8 +2,6 @@ import os
 import sys
 import json
 import cPickle
-sys.path.append('../')
-sys.path.append('../../')
 
 import tensorflow as tf
 from tensorflow.python.util import nest
@@ -11,23 +9,23 @@ import numpy as np
 from bleu import bleu
 from cider import cider
 
-import model.proto
-import model.trntst
-import model.data
-import encoder.vanilla
-import decoder.vanilla
+import framework.model.proto
+import framework.model.trntst
+import framework.model.data
+import framework.impl.caption.encoder.vanilla
+import framework.impl.caption.decoder.vanilla
 import base
 
 
-class ModelConfigBase(model.proto.ModelCombinerConfig):
+class ModelConfigBase(framework.model.proto.ModelCombinerConfig):
   def __init__(self):
-    model.proto.ModelCombinerConfig.__init__(self)
+    framework.model.proto.ModelCombinerConfig.__init__(self)
 
-    self.encoder_cfg = encoder.vanilla.Config()
-    self.decoder_cfg = decoder.vanilla.Config()
+    self.encoder_cfg = framework.impl.caption.encoder.vanilla.Config()
+    self.decoder_cfg = framework.impl.caption.decoder.vanilla.Config()
 
   def load(self, file):
-    data = model.proto.ModelCombinerConfig.load(self, file)
+    data = framework.model.proto.ModelCombinerConfig.load(self, file)
 
     self.encoder_cfg.load(data['encoder'])
     self.decoder_cfg.load(data['decoder'])
@@ -46,11 +44,11 @@ class ModelHiddentSetConfig(ModelConfigBase):
 
 
 class EncoderDecoder(base.EncoderDecoderBase):
-  name_scope = 'model.vevd.EncoderDecoder/'
+  name_scope = 'framework.model.vevd.EncoderDecoder/'
 
   def get_model_proto(self):
-    _encoder = encoder.vanilla.Encoder(self.config.encoder_cfg)
-    _decoder = decoder.vanilla.Decoder(self.config.decoder_cfg)
+    _encoder = framework.impl.caption.encoder.vanilla.Encoder(self.config.encoder_cfg)
+    _decoder = framework.impl.caption.decoder.vanilla.Decoder(self.config.decoder_cfg)
 
     return [_encoder, _decoder]
 
@@ -60,11 +58,11 @@ class EncoderDecoder(base.EncoderDecoderBase):
     with basegraph.as_default():
       with tf.variable_scope(self.name_scope):
         self._init_state = [tf.placeholder(tf.float32, shape=(none, state_size))
-          for state_size in nest.flatten(decoder.state_size)]
-        self._init_state = nest.pack_sequence_as(decoder.state_size, self._init_state)
+          for state_size in nest.flatten(framework.impl.caption.decoder.state_size)]
+        self._init_state = nest.pack_sequence_as(framework.impl.caption.decoder.state_size, self._init_state)
 
     decoder = self.model_protos[1]
-    decoder.init_state = self._init_state
+    framework.impl.caption.decoder.init_state = self._init_state
 
   def add_trn_tst_input(self, basegraph):
     base.EncoderDecoderBase.add_trn_tst_input(self, basegraph)
@@ -72,19 +70,19 @@ class EncoderDecoder(base.EncoderDecoderBase):
     with basegraph.as_default():
       with tf.variable_scope(self.name_scope):
         self._init_state = tf.placeholder(
-          tf.float32, shape=(None, decoder.state_size), name='_init_state')
+          tf.float32, shape=(None, framework.impl.caption.decoder.state_size), name='_init_state')
 
     decoder = self.model_protos[1]
-    decoder.init_state = self._init_state
+    framework.impl.caption.decoder.init_state = self._init_state
 
 
 class EncoderDecoderHiddenSet(base.EncoderDecoderBase):
-  # name_scope = 'model.vevd.EncoderDecoderHiddenSet'
-  name_scope = 'model.vevd.EncoderDecoderHiddenSet/'
+  # name_scope = 'framework.model.vevd.EncoderDecoderHiddenSet'
+  name_scope = 'framework.model.vevd.EncoderDecoderHiddenSet/'
 
   def get_model_proto(self):
-    _encoder = encoder.vanilla.Encoder(self.config.encoder_cfg)
-    _decoder = decoder.vanilla.DecoderHiddenSet(self.config.decoder_cfg)
+    _encoder = framework.impl.caption.encoder.vanilla.Encoder(self.config.encoder_cfg)
+    _decoder = framework.impl.caption.decoder.vanilla.DecoderHiddenSet(self.config.decoder_cfg)
 
     return [_encoder, _decoder]
 
@@ -100,20 +98,20 @@ class TrnTst(base.TrnTstBase):
     caption_masks = data[2]
 
     batch_size = fts.shape[0]
-    decoder = self.model.model_protos[1]
+    decoder = self.framework.model.model_protos[1]
     state_init = [
       np.zeros((batch_size, state_size), dtype=np.float)
-        for state_size in nest.flatten(decoder.state_size)
+        for state_size in nest.flatten(framework.impl.caption.decoder.state_size)
     ]
     init_wordids = np.zeros((batch_size,), dtype=np.int32)
 
     keys = [
-        self.model._fts, 
-        self.model._captionids, 
-        self.model._caption_masks, 
-        self.model._init_wordids
+        self.framework.model._fts, 
+        self.framework.model._captionids, 
+        self.framework.model._caption_masks, 
+        self.framework.model._init_wordids
       ]
-    keys += nest.flatten(self.model._init_state)
+    keys += nest.flatten(self.framework.model._init_state)
     values = [fts, captionids, caption_masks, init_wordids] + state_init
 
     return dict(zip(keys, values))
@@ -122,15 +120,15 @@ class TrnTst(base.TrnTstBase):
     fts = data
 
     batch_size = fts.shape[0]
-    decoder = self.model.model_protos[1]
+    decoder = self.framework.model.model_protos[1]
     state_init = [
       np.zeros((batch_size, state_size), dtype=np.float)
-      for state_size in nest.flatten(decoder.state_size)
+      for state_size in nest.flatten(framework.impl.caption.decoder.state_size)
     ]
     init_wordids = np.zeros((batch_size,), dtype=np.int32)
 
-    keys = [self.model._fts, self.model._init_wordids]
-    keys += nest.flatten(self.model._init_state)
+    keys = [self.framework.model._fts, self.framework.model._init_wordids]
+    keys += nest.flatten(self.framework.model._init_state)
     values = [fts, init_wordids] + state_init
 
     return dict(zip(keys, values))
@@ -155,10 +153,10 @@ class TrnTstHiddenSet(TrnTst):
     init_wordids = np.zeros((batch_size,), dtype=np.int32)
 
     return {
-      self.model._fts: fts,
-      self.model._captionids: captionids,
-      self.model._caption_masks: caption_masks,
-      self.model._init_wordids: init_wordids,
+      self.framework.model._fts: fts,
+      self.framework.model._captionids: captionids,
+      self.framework.model._caption_masks: caption_masks,
+      self.framework.model._init_wordids: init_wordids,
     }
 
   # @override
@@ -168,8 +166,8 @@ class TrnTstHiddenSet(TrnTst):
     init_wordids = np.zeros((batch_size,), dtype=np.int32)
 
     return {
-      self.model._fts: fts,
-      self.model._init_wordids: init_wordids,
+      self.framework.model._fts: fts,
+      self.framework.model._init_wordids: init_wordids,
     }
 
 
