@@ -40,7 +40,7 @@ def lplq_norm_on_attention(attentions, mask_sum, p, q,
 
 
 # unified interface with LSTMCell's state_is_tuple mode
-class GRUCell(tf.nn.rnn_cell.RNNCell):
+class GRUCell(tf.contrib.rnn.RNNCell):
   """Gated Recurrent Unit cell (cf. http://arxiv.org/abs/1406.1078)."""
 
   def __init__(self, num_units, activation=tf.nn.tanh, reuse=None):
