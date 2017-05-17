@@ -64,7 +64,7 @@ class EncoderDecoderBase(framework.model.proto.ModelCombiner):
 
     with basegraph.as_default():
       with tf.variable_scope(self.name_scope):
-        logits = tf.concat(0, decoder.logit_ops)
+        logits = decoder.logit_ops
         loss_op = framework.util.expanded_op.cross_entropy_loss_on_rnn_logits(
           self._captionids, self._caption_masks, logits)
         self.append_op2monitor('cross_entropy_loss_on_rnn_logits', loss_op)

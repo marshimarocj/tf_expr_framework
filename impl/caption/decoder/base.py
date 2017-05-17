@@ -55,7 +55,7 @@ class DecoderBase(framework.model.proto.ModelProto):
 
     # output
     # trn only
-    self._logit_ops = []
+    self._logit_ops = tf.no_op()
     self._regularize_op = tf.no_op()
     # tst only
     self._predict_prob_ops = []
