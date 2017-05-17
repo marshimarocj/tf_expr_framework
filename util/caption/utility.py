@@ -104,40 +104,40 @@ def sample_top_word_decode(sess, states, wordids,
   return caption
 
 
-# note: the addition_inputs remain same across different time steps
-def greedy_word_decode(
-    sess, states, _states, _wordids, update_state_op, prob_op, output_op,
-    max_step, 
-    _last_output=None, init_output=None, # general attention mechanism 
-    addition_input_placeholders=[], addition_inputs=[]): # input placeholders and input values 
-  batch_size = states.shape[0]
+# # note: the addition_inputs remain same across different time steps
+# def greedy_word_decode(
+#     sess, states, _states, _wordids, update_state_op, prob_op, output_op,
+#     max_step, 
+#     _last_output=None, init_output=None, # general attention mechanism 
+#     addition_input_placeholders=[], addition_inputs=[]): # input placeholders and input values 
+#   batch_size = states.shape[0]
 
-  # initialize start words <BOS>
-  wordids = np.zeros((batch_size, ), dtype=np.int32)
+#   # initialize start words <BOS>
+#   wordids = np.zeros((batch_size, ), dtype=np.int32)
 
-  caption = np.zeros((batch_size, max_step), dtype=np.int32)
-  outputs = init_output
-  for i in xrange(max_step): # assume longest sentence <= max_step
-    if type(states) is tuple:
-    else:
-      feed_dict = {
-        _states: states,
-        _wordids: wordids,
-      }
-    if _last_output is not None:
-      feed_dict[_last_output] = outputs
-    num = len(addition_input_placeholders)
-    for j in range(num):
-      feed_dict[addition_input_placeholders[j]] = addition_inputs[j]
+#   caption = np.zeros((batch_size, max_step), dtype=np.int32)
+#   outputs = init_output
+#   for i in xrange(max_step): # assume longest sentence <= max_step
+#     if type(states) is tuple:
+#     else:
+#       feed_dict = {
+#         _states: states,
+#         _wordids: wordids,
+#       }
+#     if _last_output is not None:
+#       feed_dict[_last_output] = outputs
+#     num = len(addition_input_placeholders)
+#     for j in range(num):
+#       feed_dict[addition_input_placeholders[j]] = addition_inputs[j]
 
-    states, word_probs, outputs = sess.run(
-      [update_state_op, prob_op, output_op],
-      feed_dict=feed_dict)
+#     states, word_probs, outputs = sess.run(
+#       [update_state_op, prob_op, output_op],
+#       feed_dict=feed_dict)
     
-    wordids = np.argmax(word_probs, 1)
-    caption[:, i] = wordids
+#     wordids = np.argmax(word_probs, 1)
+#     caption[:, i] = wordids
 
-  return caption
+#   return caption
 
 
 # return sent_pool in shape (batch_size, sent_pool_size, 3)
