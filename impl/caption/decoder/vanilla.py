@@ -50,7 +50,7 @@ class Decoder(base.DecoderBase):
   def build_inference_graph_in_tst(self, basegraph):
     with basegraph.as_default():
       with tf.variable_scope(self.name_scope) as scope:
-        cell = tf.nn.rnn_cell.MultiRNNCell(self._cells, state_is_tuple=True)
+        cell = tf.contrib.rnn.MultiRNNCell(self._cells, state_is_tuple=True)
         self._tst_ft_state = self._ft_step(cell, scope, False)
         self._greedy_word_steps(cell, scope)
 
@@ -59,14 +59,14 @@ class Decoder(base.DecoderBase):
       with tf.variable_scope(self.name_scope) as scope:
         cells = []
         for cell in self._cells[:-1]:
-          cells.append(tf.nn.rnn_cell.DropoutWrapper(cell, input_keep_prob=0.5))
-        cells.append(tf.nn.rnn_cell.DropoutWrapper(self._cells[-1], input_keep_prob=0.5, output_keep_prob=0.5))
-        cell = tf.nn.rnn_cell.MultiRNNCell(cells, state_is_tuple=True)
+          cells.append(tf.contrib.rnn.DropoutWrapper(cell, input_keep_prob=0.5))
+        cells.append(tf.contrib.rnn.DropoutWrapper(self._cells[-1], input_keep_prob=0.5, output_keep_prob=0.5))
+        cell = tf.contrib.rnn.MultiRNNCell(cells, state_is_tuple=True)
 
         self._trn_ft_state = self._ft_step(cell, scope, False)
         self._word_steps(cell, scope)
 
-        cell = tf.nn.rnn_cell.MultiRNNCell(self._cells, state_is_tuple=True)
+        cell = tf.contrib.rnn.MultiRNNCell(self._cells, state_is_tuple=True)
         self._tst_ft_state = self._ft_step(cell, scope, True)
         self._greedy_word_steps(cell, scope)
 
@@ -136,7 +136,7 @@ class DecoderHiddenSet(base.DecoderBase):
   def build_inference_graph_in_tst(self, basegraph):
     with basegraph.as_default():
       with tf.variable_scope(self.name_scope) as scope:
-        cell = tf.nn.rnn_cell.MultiRNNCell(self._cells, state_is_tuple=True)
+        cell = tf.contrib.rnn.MultiRNNCell(self._cells, state_is_tuple=True)
         self._tst_ft_state = self._ft_step(cell, scope, None)
         self._word_step(cell, scope, False)
 
@@ -145,14 +145,14 @@ class DecoderHiddenSet(base.DecoderBase):
       with tf.variable_scope(self.name_scope) as scope:
         cells = []
         for cell in self._cells[:-1]:
-          cells.append(tf.nn.rnn_cell.DropoutWrapper(cell, input_keep_prob=0.5))
-        cells.append(tf.nn.rnn_cell.DropoutWrapper(self._cells[-1], input_keep_prob=0.5, output_keep_prob=0.5))
-        cell = tf.nn.rnn_cell.MultiRNNCell(cells, state_is_tuple=True)
+          cells.append(tf.contrib.rnn.DropoutWrapper(cell, input_keep_prob=0.5))
+        cells.append(tf.contrib.rnn.DropoutWrapper(self._cells[-1], input_keep_prob=0.5, output_keep_prob=0.5))
+        cell = tf.contrib.rnn.MultiRNNCell(cells, state_is_tuple=True)
 
         self._trn_ft_state = self._ft_step(cell, scope, None)
         self._word_steps(cell, scope)
 
-        cell = tf.nn.rnn_cell.MultiRNNCell(self._cells, state_is_tuple=True)
+        cell = tf.contrib.rnn.MultiRNNCell(self._cells, state_is_tuple=True)
         self._tst_ft_state = self._ft_step(cell, scope, None)
         self._word_step(cell, scope, True)
 
