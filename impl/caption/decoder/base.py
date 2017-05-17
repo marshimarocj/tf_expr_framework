@@ -108,7 +108,7 @@ class DecoderBase(framework.model.proto.ModelProto):
   # trn
   @property
   def logit_ops(self):
-    if len(self._logit_ops) == 0:
+    if self._logit_ops is tf.Operation:
       raise NotImplementedError("""please implement decoder.DecoderBase._logit_ops""")
     return self._logit_ops
 
