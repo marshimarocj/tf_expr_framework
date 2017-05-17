@@ -308,6 +308,7 @@ class ReaderBase(framework.model.data.Reader):
       ft = np.load(ft_file)
       fts.append(ft)
     self.fts = np.concatenate(tuple(fts), axis=1)
+    self.fts = self.fts.astype(np.float32)
     self.num_ft = self.fts.shape[0]
 
     self.videoids = np.load(open(videoid_file))
