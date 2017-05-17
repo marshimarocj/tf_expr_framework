@@ -3,7 +3,6 @@ import sys
 import json
 import cPickle
 import random
-sys.path.append('../../')
 
 import tensorflow as tf
 from tensorflow.python.util import nest
@@ -11,14 +10,14 @@ import numpy as np
 from bleu import bleu
 from cider import cider
 
-import model.proto
-import model.trntst
-import model.data
-import util.caption.utility
-import util.expanded_op
+import framework.model.proto
+import framework.model.trntst
+import framework.model.data
+import framework.util.caption.utility
+import framework.util.expanded_op
 
 
-class EncoderDecoderBase(model.proto.ModelCombiner):
+class EncoderDecoderBase(framework.model.proto.ModelCombiner):
   name_scope = 'model.vevd.EncoderDecoderBase/'
 
   def add_tst_input(self, basegraph):
@@ -66,7 +65,7 @@ class EncoderDecoderBase(model.proto.ModelCombiner):
     with basegraph.as_default():
       with tf.variable_scope(self.name_scope):
         logits = tf.concat(0, decoder.logit_ops)
-        loss_op = util.expanded_op.cross_entropy_loss_on_rnn_logits(
+        loss_op = framework.util.expanded_op.cross_entropy_loss_on_rnn_logits(
           self._captionids, self._caption_masks, logits)
         self.append_op2monitor('cross_entropy_loss_on_rnn_logits', loss_op)
 
@@ -122,9 +121,9 @@ class EncoderDecoderBase(model.proto.ModelCombiner):
     }
 
 
-class PathCfgBase(model.trntst.PathCfg):
+class PathCfgBase(framework.model.trntst.PathCfg):
   def __init__(self):
-    model.trntst.PathCfg.__init__(self)
+    framework.model.trntst.PathCfg.__init__(self)
     # manually provided in the cfg file
     self.split_dir = ''
     self.annotation_dir = ''
@@ -153,12 +152,12 @@ class PathCfgBase(model.trntst.PathCfg):
 #   feed_data_and_run_loss_op_in_val,
 # provide helper functions:
 #   output_by_sent_mode
-class TrnTstBase(model.trntst.TrnTst):
+class TrnTstBase(framework.model.trntst.TrnTst):
   def __init__(self, model_cfg, path_cfg, model, gen_sent_mode=1):
-    model.trntst.TrnTst.__init__(self, model_cfg, path_cfg, model)
+    framework.model.trntst.TrnTst.__init__(self, model_cfg, path_cfg, model)
 
     # caption int to string
-    self.int2str = util.caption.utility.CaptionInt2str(path_cfg.word_file)
+    self.int2str = framework.util.caption.utility.CaptionInt2str(path_cfg.word_file)
 
     self.gen_sent_mode = gen_sent_mode
 
@@ -288,7 +287,7 @@ def predict_in_tst(trntst, sess, tst_reader, predict_file):
   json.dump(videoid2caption, open(predict_file, 'w'))
 
 
-class ReaderBase(model.data.Reader):
+class ReaderBase(framework.model.data.Reader):
   def __init__(self, ft_files, videoid_file, 
       shuffle=True, annotation_file=None, captionstr_file=None):
     self.fts = np.empty(0) # (numVideo, dimVideo)

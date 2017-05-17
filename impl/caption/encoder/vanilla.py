@@ -1,12 +1,11 @@
 import sys
-sys.path.append('../../../')
 
 import tensorflow as tf
 
-import model.proto
+import framework.model.proto
 
 
-class Config(model.proto.ProtoConfig):
+class Config(framework.model.proto.ProtoConfig):
   def __init__(self):
     self.dim_fts = [0, 0, 0, 0] # c3d, mfccbox, mfccfv, category
     self.dim_output = 512 # dim of feature layer output
@@ -18,17 +17,17 @@ class Config(model.proto.ProtoConfig):
 
   # @override
   def load(self, cfg_dict):
-    model.proto.ProtoConfig.load(self, cfg_dict)
+    framework.model.proto.ProtoConfig.load(self, cfg_dict)
 
     if sum(self.dim_fts) == self.dim_output:
       assert self.reg_type == None
 
 
-class Encoder(model.proto.ModelProto):
+class Encoder(framework.model.proto.ModelProto):
   name_scope = 'vanilla.Encoder'
 
   def __init__(self, config):
-    model.proto.ModelProto.__init__(self, config)
+    framework.model.proto.ModelProto.__init__(self, config)
 
     # input
     self._fts = tf.no_op()
@@ -105,7 +104,7 @@ class Encoder(model.proto.ModelProto):
         self._regularize_op = tf.reduce_sum(self.fc_W**2)**0.5
 
 
-class AttentionFtConfig(model.proto.ProtoConfig):
+class AttentionFtConfig(framework.model.proto.ProtoConfig):
   def __init__(self):
     self.dim_fts = []
     self.dim_time = 0
@@ -118,7 +117,7 @@ class AttentionFtConfig(model.proto.ProtoConfig):
 
   # @override
   def load(self, cfg_dict):
-    model.proto.ProtoConfig.load(self, cfg_dict)
+    framework.model.proto.ProtoConfig.load(self, cfg_dict)
 
     if sum(self.dim_fts) == self.dim_output:
       assert self.reg_type == None
@@ -128,7 +127,7 @@ class AttentionFtEncoder(Encoder):
   name_scope='vanilla.AttentionFtEncoder'
 
   def __init__(self, config):
-    model.proto.ModelProto.__init__(self, config)
+    framework.model.proto.ModelProto.__init__(self, config)
     
     # input
     self._fts = tf.no_op()

@@ -1,12 +1,11 @@
 import sys
-sys.path.append('../../../')
 
 import tensorflow as tf
 
-import model.proto
+import framework.model.proto
 
 
-class ConfigBase(model.proto.ProtoConfig):
+class ConfigBase(framework.model.proto.ProtoConfig):
   def __init__(self):
     self.dim_hidden = 512
     self.dim_input = 512
@@ -25,11 +24,11 @@ class ConfigBase(model.proto.ProtoConfig):
     self.num_layer = 1
 
 
-class DecoderBase(model.proto.ModelProto):
+class DecoderBase(framework.model.proto.ModelProto):
   name_scope = 'base.DecoderBase'
 
   def __init__(self, config):
-    model.proto.ModelProto.__init__(self, config)
+    framework.model.proto.ModelProto.__init__(self, config)
 
     self._cells = []
 
