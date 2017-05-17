@@ -61,7 +61,7 @@ class DecoderBase(model.proto.ModelProto):
     self._predict_prob_ops = []
     self._output_ops = []
 
-  # input ops
+  ###############input###############
   @property
   def ft_embeds(self):
     if self._ft_embeds is tf.Operation:
@@ -72,6 +72,7 @@ class DecoderBase(model.proto.ModelProto):
   def ft_embeds(self, val):
     self._ft_embeds = val
 
+  # trn
   @property
   def captionids(self):
     if self._captionids is tf.Operation:
@@ -92,6 +93,7 @@ class DecoderBase(model.proto.ModelProto):
   def caption_masks(self, val):
     self._caption_masks = val
 
+  # tst
   @property
   def init_wordids(self):
     if self._init_wordids is tf.Operation:
@@ -102,7 +104,8 @@ class DecoderBase(model.proto.ModelProto):
   def init_wordids(self, val):
     self._init_wordids = val
 
-  # trn ops
+  ###############output###############
+  # trn
   @property
   def logit_ops(self):
     if len(self._logit_ops) == 0:
@@ -115,7 +118,7 @@ class DecoderBase(model.proto.ModelProto):
       raise NotImplementedError("""please implement decoder.DecoderBase._regularize_op""")
     return self._regularize_op
 
-  # tst ops
+  # tst
   @property
   def output_ops(self):
     if len(self._output_ops) == 0:

@@ -37,6 +37,7 @@ class Encoder(model.proto.ModelProto):
     # trn only
     self._regularize_op = tf.no_op()
 
+  ###############input###############
   @property
   def fts(self):
     return self._fts
@@ -45,10 +46,12 @@ class Encoder(model.proto.ModelProto):
   def fts(self, val):
     self._fts = val 
 
+  ###############output###############
   @property
   def feature_op(self):
     return self._feature_op
 
+  # trn
   @property
   def regularize_op(self):
     return self._regularize_op
