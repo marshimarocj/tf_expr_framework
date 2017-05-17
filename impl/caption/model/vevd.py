@@ -117,7 +117,7 @@ class TrnTst(base.TrnTstBase):
     return dict(zip(keys, values))
 
   def _construct_encoder_feed_dict_in_tst(self, data):
-    fts = data
+    fts = data[0]
 
     batch_size = fts.shape[0]
     decoder = self.model.model_protos[1]
