@@ -3,6 +3,7 @@ import sys
 import tensorflow as tf
 
 import framework.model.proto
+import framework.util.expanded_op
 
 
 class ConfigBase(framework.model.proto.ProtoConfig):
@@ -34,14 +35,14 @@ class DecoderBase(framework.model.proto.ModelProto):
 
     if config.cell_type == 'lstm':
       self._cells = [
-        tf.nn.rnn_cell.LSTMCell(config.dim_hidden, state_is_tuple=True) \
+        tf.contrib.rnn.LSTMCell(config.dim_hidden, state_is_tuple=True) \
         for _ in range(config.num_layer)
       ]
     elif config.cell_type == 'gru':
       assert config.dim_input == config.dim_hidden, \
         "require config.dim_input == config.dim_hidden in vanilla.DecoderBase.__init__"
       self._cells = [
-        util.expanded_op.GRUCell(config.dim_hidden) for _ in range(config.num_layer)
+        framework.util.expanded_op.GRUCell(config.dim_hidden) for _ in range(config.num_layer)
       ]
 
     # input
