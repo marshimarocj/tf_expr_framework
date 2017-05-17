@@ -89,9 +89,9 @@ class Decoder(base.DecoderBase):
       output, state = cell(input, state)
       outputs.append(output)
 
-    outputs = tf.concat(0, outputs)
+    outputs = tf.concat(outputs, 0)
     logits = tf.nn.xw_plus_b(outputs, self.softmax_W, self.softmax_B)
-    self._logit_ops = tf.split(0, self._config.max_words_in_caption-1, logits)
+    self._logit_ops = tf.split(logits, self._config.max_words_in_caption-1, axis=0)
     self._logit_ops = list(self._logit_ops)
 
   def _greedy_word_steps(self, cell, scope):
@@ -172,12 +172,11 @@ class DecoderHiddenSet(base.DecoderBase):
         scope.reuse_variables()
       input = tf.nn.embedding_lookup(self.word_embedding_W, self._captionids[:, i])
       output, state = cell(input, state) # (None, dim_hidden)
-      print output.dtype, output.shape
       outputs.append(output)
 
-    outputs = tf.concat(0, outputs)
+    outputs = tf.concat(outputs, 0)
     logits = tf.nn.xw_plus_b(outputs, self.softmax_W, self.softmax_B)
-    self._logit_ops = tf.split(0, self._config.max_words_in_caption-1, logits)
+    self._logit_ops = tf.split(logits, self._config.max_words_in_caption-1, axis=0)
     self._logit_ops = list(self._logit_ops)
 
   def _greedy_word_steps(self, cell, scope):
