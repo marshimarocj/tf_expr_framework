@@ -138,7 +138,7 @@ class DecoderHiddenSet(base.DecoderBase):
       with tf.variable_scope(self.name_scope) as scope:
         cell = tf.contrib.rnn.MultiRNNCell(self._cells, state_is_tuple=True)
         self._tst_ft_state = self._ft_step(cell, scope, None)
-        self._word_step(cell, scope, False)
+        self._greedy_word_steps(cell, scope)
 
   def build_inference_graph_in_trn_tst(self, basegraph):
     with basegraph.as_default():
@@ -154,7 +154,7 @@ class DecoderHiddenSet(base.DecoderBase):
 
         cell = tf.contrib.rnn.MultiRNNCell(self._cells, state_is_tuple=True)
         self._tst_ft_state = self._ft_step(cell, scope, None)
-        self._word_step(cell, scope, True)
+        self._greedy_word_steps(cell, scope)
 
   def _ft_step(self, cell, scope, reuse):
     state_size = cell.state_size
