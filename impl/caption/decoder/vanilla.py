@@ -172,6 +172,7 @@ class DecoderHiddenSet(base.DecoderBase):
         scope.reuse_variables()
       input = tf.nn.embedding_lookup(self.word_embedding_W, self._captionids[:, i])
       output, state = cell(input, state) # (None, dim_hidden)
+      print output.dtype, output.shape
       outputs.append(output)
 
     outputs = tf.concat(0, outputs)
