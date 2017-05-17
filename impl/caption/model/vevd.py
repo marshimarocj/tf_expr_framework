@@ -2,7 +2,7 @@ import os
 import sys
 import json
 import cPickle
-sys.path.append('../')
+# sys.path.append('../')
 sys.path.append('../../../')
 
 import tensorflow as tf
