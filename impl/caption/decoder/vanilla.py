@@ -185,13 +185,12 @@ class DecoderHiddenSet(base.DecoderBase):
     for i in xrange(self._config.max_words_in_caption):
       if i > 0:
         scope.reuse_variables()
-      print i
 
-      outputs, states = cell(wordids, states)
+      input = tf.nn.embedding_lookup(self.word_embedding_W, wordids)
+      outputs, states = cell(input, states)
       logits = tf.nn.xw_plus_b(outputs, self.softmax_W, self.softmax_B) # (batch_size, num_words)
       wordids = tf.argmax(logits, axis=1)
       predict_prob = tf.nn.softmax(logits) # (batch_size, num_words)
-      print len(states)
 
       self._output_ops.append(wordids)
       self._predict_prob_ops.append(predict_prob)
