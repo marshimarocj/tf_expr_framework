@@ -181,7 +181,7 @@ class DecoderHiddenSet(base.DecoderBase):
 
   def _greedy_word_steps(self, cell, scope):
     wordids = self._init_wordids # (batch_size,)
-    state = self._tst_ft_state
+    states = self._tst_ft_state
     for i in xrange(self._config.max_words_in_caption):
       if i > 0:
         scope.reuse_variables()
