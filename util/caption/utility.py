@@ -118,10 +118,12 @@ def greedy_word_decode(
   caption = np.zeros((batch_size, max_step), dtype=np.int32)
   outputs = init_output
   for i in xrange(max_step): # assume longest sentence <= max_step
-    feed_dict = {
-      _states: states,
-      _wordids: wordids,
-    }
+    if type(states) is tuple:
+    else:
+      feed_dict = {
+        _states: states,
+        _wordids: wordids,
+      }
     if _last_output is not None:
       feed_dict[_last_output] = outputs
     num = len(addition_input_placeholders)
@@ -186,13 +188,6 @@ def beamsearch_word_decode(
       if i == 0:
         feed_dict[addition_input_placeholders[j]] = addition_inputs[j]
       else:
-        # addition_input = addition_inputs[j]
-        # shape = list(addition_input.shape)
-        # shape[0] *= width
-        # expand_addition_input = np.zeros(tuple(shape), dtype=np.float32)
-        # for ib in xrange(batch_size):
-        #   expand_addition_input[ib*width: (ib+1)*width] = addition_input[ib]
-        # feed_dict[addition_input_placeholders[j]] = expand_addition_input
         feed_dict[addition_input_placeholders[j]] = expand_addition_inputs[j]
         
     states, prob, outputs = sess.run([update_state_op, prob_op, output_op],
