@@ -205,9 +205,9 @@ class FullModel(object):
         tf.summary.scalar('loss', self._loss_op)
         for var in tf.trainable_variables():
           tf.summary.histogram(var.name + '/activations', var)
-        for grad, var in self._gradient_op:
-          if grad is not None:
-            tf.summary.histogram(var.name + '/gradients', grad)
+        # for grad, var in self._gradient_op:
+        #   if grad is not None:
+        #     tf.summary.histogram(var.name + '/gradients', grad)
         self._summary_op = tf.summary.merge_all()
 
   def _build_parameter_graph(self, basegraph):
