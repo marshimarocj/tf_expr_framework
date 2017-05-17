@@ -154,7 +154,7 @@ class TrnTstHiddenSet(TrnTst):
 
     return {
       self.model._fts: fts,
-      self..model._captionids: captionids,
+      self.model._captionids: captionids,
       self.model._caption_masks: caption_masks,
       self.model._init_wordids: init_wordids,
     }
