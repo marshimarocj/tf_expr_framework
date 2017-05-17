@@ -99,7 +99,7 @@ class DecoderBase(framework.model.proto.ModelProto):
       raise NotImplementedError("""please implement decoder.DecoderBase._wordids""")
     return self._init_wordids
  
-  @wordids.setter
+  @init_wordids.setter
   def init_wordids(self, val):
     self._init_wordids = val
 
