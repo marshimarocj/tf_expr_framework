@@ -132,6 +132,7 @@ class Decoder(base.DecoderBase):
       input = tf.nn.embedding_lookup(self.word_embedding_W, wordids) 
       outputs, states = cell(input, states)
       logit = tf.nn.xw_plus_b(outputs, self.softmax_W, self.softmax_B)
+      logit = tf.nn.log_softmax(logit)
 
       if i == 0:
         logit_topk, word_topk = tf.nn.top_k(logit, k) # (batch_size, k)
@@ -303,6 +304,7 @@ class DecoderHiddenSet(base.DecoderBase):
       input = tf.nn.embedding_lookup(self.word_embedding_W, wordids) 
       outputs, states = cell(input, states)
       logit = tf.nn.xw_plus_b(outputs, self.softmax_W, self.softmax_B)
+      logit = tf.nn.log_softmax(logit)
 
       if i == 0:
         logit_topk, word_topk = tf.nn.top_k(logit, k) # (batch_size, k)
