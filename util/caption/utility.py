@@ -319,7 +319,8 @@ def beamsearch_word_decode(
 #   return caption, caption_loss
 
 
-def beamsearch_recover_captions(wordids, cum_logits, pres, ends, topk):
+# pool_size <= beam_width
+def beamsearch_recover_captions(wordids, cum_logits, pres, ends, beam_width, pool_size):
   batch_size = wordids[0].shape[0]
   num_step = len(wordids)
   sent_pool = [[] for _ in range(batch_size)]
@@ -328,7 +329,8 @@ def beamsearch_recover_captions(wordids, cum_logits, pres, ends, topk):
     _ends = ends[n]
     for end in _ends:
       b = end[0]
-      pre = pres[n][b, end[1]]
+      k = end[1]
+      pre = pres[n][b, k]
       caption = []
       logit = 0
       for t in xrange(n-1, -1, -1):
@@ -337,13 +339,23 @@ def beamsearch_recover_captions(wordids, cum_logits, pres, ends, topk):
         caption.append(wordids[t][b, pre])
         pre = pres[t][b, pre]
       caption = np.array(caption, np.int32)[::-1]
-      sent_pool[b].append((logit, caption))
+      if len(sent_pool[b]) <  pool_size:
+        sent_pool[b].append((logit, caption))
+
+  # in case never ending, treat the last word as EOS
   _ends = ends[n]
+  b2ks = {}
+  for end in _ends:
+    b = end[0]
+    k = end[1]
+    if b not in b2ks:
+      b2ks[b] = set()
+    b2ks[b].add(k)
   for b in range(batch_size):
-    if len(sent_pool) >= topk:
+    if len(sent_pool) >= pool_size:
       continue
-    end_idxs = set([d[1] for d in _ends[b]])
-    for k in range(topk):
+    end_idxs = b2ks[b]
+    for k in range(beam_width):
       if k in end_idxs:
         continue
       pre = pres[n][b, k]
@@ -355,8 +367,9 @@ def beamsearch_recover_captions(wordids, cum_logits, pres, ends, topk):
         pre = pres[t][b, pre]
       caption = np.array(caption, np.int32)[::-1]
       sent_pool[b].append((logit, caption))
+
   out = []
   for b, sents in enumerate(sent_pool):
     sents = sorted(sents, key=lambda x:x[0], reverse=True)
-    out.append(sents[:topk])
+    out.append(sents[:pool_size])
   return out
