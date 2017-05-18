@@ -109,69 +109,31 @@ class Decoder(base.DecoderBase):
   def _beam_search_word_steps(self, cell, scope):
     scope.reuse_variables()
 
-    state_size_struct = self.state_size
+    state_struct = self.state_size
 
     k = self.config.beam_width
     m = self.config.max_words_in_caption
     n = self.config.num_words
     batch_size = tf.shape(self.init_wordids)[0]
 
+    # auxiliary idx variable for topk selection operations
+    row_idx = tf.tile(tf.expand_dims(tf.range(0, batch_size), 1), (1, k)) # (batch_size, k) 
+    row_idx = tf.reshape(row_idx, (-1, 1)) # (batch_size*k, 1)
+    # [0...0, ..., batch_size-1...batch_size-1]
+
     wordids = self._init_wordids # (batch_size,)
     states = self._tst_ft_state
     for i in xrange(m):
-      input = tf.nn.embedding_lookup(self.word_embedding_W, wordids) 
       # (batch_size,) in step 0 and (batch_size*k,) in other steps
+      input = tf.nn.embedding_lookup(self.word_embedding_W, wordids) 
       outputs, states = cell(input, states)
+      logit = tf.nn.xw_plus_b(outputs, self.softmax_W, self.softmax_B)
 
       if i == 0:
-        logit = tf.nn.xw_plus_b(outputs, self.softmax_W, self.softmax_B)
         logit_topk, word_topk = tf.nn.top_k(logit, k) # (batch_size, k)
         self._output_ops.append(word_topk)
-        pre = tf.reshape(tf.tile(tf.range(0, k), (batch_size,)), (-1, k))
+        pre = -tf.ones((batch_size, k), dtype=tf.int32)
         self._beam_pre_ops.append(pre)
-        is_end = tf.equal(word_topk, tf.ones_like(word_topk, dtype=tf.int32))
-        end_idx = tf.where(is_end)
-        self._beam_cum_logit_ops.append(logit_topk)
-        self._beam_end_ops.append(end_idx)
-
-        wordids = framework.util.expanded_op.flatten(word_topk) # (batch_size*k,)
-
-        # expand state
-        states = nest.flatten(states)
-        states = [
-          tf.reshape(tf.tile(state, [1, k]), (batch_size*k, -1)) # (batch_size*k, hidden_size)
-          for state in states
-        ]
-        states = nest.pack_sequence_as(state_size_struct, states)
-      else:
-        # select top k*k for each video feature
-        logit = tf.nn.xw_plus_b(outputs, self.softmax_W, self.softmax_B) # (batch_size*k, 1)
-        logit += tf.reshape(self._beam_cum_logit_ops[-1], (-1, 1))
-        logit_topk2, word_topk2 = tf.nn.top_k(logit, k) # (batch_size*k, k)
-        logit_topk2 = tf.reshape(logit_topk2, (-1, k*k)) # (batch_size, k*k)
-        word_topk2 = tf.reshape(word_topk2, (-1, k*k)) # (batch_size, k*k)
-        logit_topk, idx_topk = tf.nn.top_k(logit_topk2, k) # (batch_size, k)
-        col_idx_topk = tf.reshape(idx_topk, (-1, 1)) # (batch_size*k, 1)
-        row_idx_topk = tf.tile(tf.expand_dims(tf.range(0, batch_size), 1), (1, k)) # (batch_size, k) 
-        # [[0...0], ..., [batch_size-1...batch_size-1]]
-        row_idx_topk = tf.reshape(row_idx_topk, (-1, 1)) # (batch_size*k, 1)
-        idx = tf.concat([row_idx_topk, col_idx_topk], 1) # (batch_size*k, 2)
-        wordids = word_topk = tf.gather_nd(word_topk2, idx) # (batch_size*k, )
-        word_topk = tf.reshape(word_topk, (-1, k))
-        self._output_ops.append(word_topk)
-        pre = idx_topk//k # (batch_size, k)
-        self._beam_pre_ops.append(pre)
-        # update states
-        states = nest.flatten(states)
-        _states = []
-        for state in states:
-          state = tf.reshape(state, (batch_size, k, -1))
-          col_pre = tf.reshape(pre, (-1, 1)) # (batch_size*k, 1)
-          row_pre = row_idx_topk # (batch_size*k, 1)
-          idx = tf.concat([row_pre, col_pre], 1) # (batch_size*k, 2)
-          state = tf.gather_nd(state, idx)
-          _states.append(state)
-        states = nest.pack_sequence_as(state_size_struct, _states)
 
         # set cumulated probability of completed sentences to -inf
         is_end = tf.equal(word_topk, tf.ones_like(word_topk, dtype=tf.int32))
@@ -179,6 +141,53 @@ class Decoder(base.DecoderBase):
         end_idx = tf.where(is_end)
         self._beam_cum_logit_ops.append(logit_topk)
         self._beam_end_ops.append(end_idx)
+
+        wordids = framework.util.expanded_op.flatten(word_topk) # (batch_size*k,)
+
+        # expand state
+        states = nest.flatten(states) # (batch_size, hidden_size)
+        states = [
+          tf.reshape(tf.tile(state, [1, k]), (batch_size*k, -1)) # (batch_size*k, hidden_size)
+          for state in states
+        ]
+        states = nest.pack_sequence_as(state_struct, states)
+      else:
+        # first select top k*k; then select top k
+        logit += tf.reshape(self._beam_cum_logit_ops[-1], (-1, 1))
+        logit_topk2, word_topk2 = tf.nn.top_k(logit, k) # (batch_size*k, k)
+        logit_topk2 = tf.reshape(logit_topk2, (-1, k*k)) # (batch_size, k*k)
+        word_topk2 = tf.reshape(word_topk2, (-1, k*k)) # (batch_size, k*k)
+        logit_topk, idx_topk = tf.nn.top_k(logit_topk2, k) # (batch_size, k)
+
+        pre = idx_topk//k # (batch_size, k)
+        self._beam_pre_ops.append(pre)
+        col_idx_topk = tf.reshape(idx_topk, (-1, 1)) # (batch_size*k, 1)
+        row_idx_topk = row_idx
+        idx = tf.concat([row_idx_topk, col_idx_topk], 1) # (batch_size*k, 2)
+        word_topk = tf.gather_nd(word_topk2, idx) # (batch_size*k, )
+        word_topk = tf.reshape(word_topk, (-1, k)) # (batch_size, k)
+        self._output_ops.append(word_topk)
+
+        # set cumulated probability of completed sentences to -inf
+        is_end = tf.equal(word_topk, tf.ones_like(word_topk, dtype=tf.int32))
+        logit_topk = tf.where(is_end, -100000000*tf.ones_like(logit_topk), logit_topk) 
+        end_idx = tf.where(is_end)
+        self._beam_cum_logit_ops.append(logit_topk)
+        self._beam_end_ops.append(end_idx)
+
+        wordids = framework.util.expanded_op.flatten(word_topk) # (batch_size*k,)
+
+        # rearrange state indexs based on selection
+        states = nest.flatten(states)
+        _states = []
+        for state in states:
+          state = tf.reshape(state, (batch_size, k, -1))
+          col_pre = tf.reshape(pre, (-1, 1)) # (batch_size*k, 1)
+          row_pre = row_idx # (batch_size*k, 1)
+          idx = tf.concat([row_pre, col_pre], 1) # (batch_size*k, 2)
+          state = tf.gather_nd(state, idx)
+          _states.append(state)
+        states = nest.pack_sequence_as(state_struct, _states)
 
 
 # exactly same as figure 3 in MSR-VTT: A Large Video Description Dataset for Bridging Video and Language
@@ -266,14 +275,17 @@ class DecoderHiddenSet(base.DecoderBase):
       self._predict_prob_ops.append(predict_prob)
 
   def _beam_search_word_steps(self, cell, scope):
-
-    state_size_struct = self.state_size
-    state_size = nest.flatten(state_size_struct)
+    state_struct = self.state_size
 
     k = self.config.beam_width
     m = self.config.max_words_in_caption
     n = self.config.num_words
     batch_size = tf.shape(self.init_wordids)[0]
+
+    # auxiliary idx variable for topk selection operations
+    row_idx = tf.tile(tf.expand_dims(tf.range(0, batch_size), 1), (1, k)) # (batch_size, k) 
+    row_idx = tf.reshape(row_idx, (-1, 1)) # (batch_size*k, 1)
+    # [0...0, ..., batch_size-1...batch_size-1]
 
     wordids = self._init_wordids # (batch_size,)
     states = self._tst_ft_state
@@ -281,47 +293,16 @@ class DecoderHiddenSet(base.DecoderBase):
       if i > 0:
         scope.reuse_variables()
 
-      input = tf.nn.embedding_lookup(self.word_embedding_W, wordids) 
       # (batch_size,) in step 0 and (batch_size*k,) in other steps
+      input = tf.nn.embedding_lookup(self.word_embedding_W, wordids) 
       outputs, states = cell(input, states)
+      logit = tf.nn.xw_plus_b(outputs, self.softmax_W, self.softmax_B)
 
       if i == 0:
-        logit = tf.nn.xw_plus_b(outputs, self.softmax_W, self.softmax_B)
         logit_topk, word_topk = tf.nn.top_k(logit, k) # (batch_size, k)
         self._output_ops.append(word_topk)
-        pre = tf.reshape(tf.tile(tf.range(0, k), (batch_size,)), (-1, k))
+        pre = -tf.ones((batch_size, k), dtype=tf.int32)
         self._beam_pre_ops.append(pre)
-        is_end = tf.equal(word_topk, tf.ones_like(word_topk, dtype=tf.int32))
-        logit_topk = tf.where(is_end, -100000000*tf.ones_like(logit_topk), logit_topk) 
-        end_idx = tf.where(is_end)
-        self._beam_cum_logit_ops.append(logit_topk)
-        self._beam_end_ops.append(end_idx)
-
-        wordids = framework.util.expanded_op.flatten(word_topk)
-
-        # expand state
-        states = nest.flatten(states)
-        states = [
-          tf.reshape(tf.tile(state, [1, k]), (-1, size)) # (batch_size*k, hidden_size)
-          for state, size in zip(states, state_size)
-        ]
-        states = nest.pack_sequence_as(state_size_struct, states)
-      else:
-        # select top k*k for each video feature
-        logit = tf.nn.xw_plus_b(outputs, self.softmax_W, self.softmax_B) # (batch_size*k, n)
-        logit += tf.reshape(self._beam_cum_logit_ops[-1], (-1, 1))
-        logit_topk2, word_topk2 = tf.nn.top_k(logit, k) # (batch_size*k, k)
-        logit_topk2 = tf.reshape(logit_topk2, (-1, k*k)) # (batch_size, k*k)
-        word_topk2 = tf.reshape(word_topk2, (-1, k*k)) # (batch_size, k*k)
-        logit_topk, idx_topk = tf.nn.top_k(logit_topk2, k) # (batch_size, k)
-        col_idx_topk = tf.reshape(idx_topk, (-1, 1)) # (batch_size*k, 1)
-        row_idx_topk = tf.tile(tf.expand_dims(tf.range(0, batch_size), 1), (1, k)) # (batch_size, k)
-        row_idx_topk = tf.reshape(row_idx_topk, (-1, 1)) # (batch_size*k, 1)
-        idx = tf.concat([row_idx_topk, col_idx_topk], 1) # (batch_size*k, 2)
-        word_topk = tf.gather_nd(word_topk2, idx) #(batch_size*k, 1)
-        word_topk = tf.reshape(word_topk, (-1, k))
-        self._output_ops.append(word_topk)
-        self._beam_pre_ops.append(idx_topk//k)
 
         # set cumulated probability of completed sentences to -inf
         is_end = tf.equal(word_topk, tf.ones_like(word_topk, dtype=tf.int32))
@@ -329,3 +310,50 @@ class DecoderHiddenSet(base.DecoderBase):
         end_idx = tf.where(is_end)
         self._beam_cum_logit_ops.append(logit_topk)
         self._beam_end_ops.append(end_idx)
+
+        wordids = framework.util.expanded_op.flatten(word_topk) # (batch_size*k,)
+
+        # expand state
+        states = nest.flatten(states) # (batch_size, hidden_size)
+        states = [
+          tf.reshape(tf.tile(state, [1, k]), (batch_size*k, -1)) # (batch_size*k, hidden_size)
+          for state in states
+        ]
+        states = nest.pack_sequence_as(state_struct, states)
+      else:
+        # first select top k*k; then select top k
+        logit += tf.reshape(self._beam_cum_logit_ops[-1], (-1, 1))
+        logit_topk2, word_topk2 = tf.nn.top_k(logit, k) # (batch_size*k, k)
+        logit_topk2 = tf.reshape(logit_topk2, (-1, k*k)) # (batch_size, k*k)
+        word_topk2 = tf.reshape(word_topk2, (-1, k*k)) # (batch_size, k*k)
+        logit_topk, idx_topk = tf.nn.top_k(logit_topk2, k) # (batch_size, k)
+
+        pre = idx_topk//k # (batch_size, k)
+        self._beam_pre_ops.append(pre)
+        col_idx_topk = tf.reshape(idx_topk, (-1, 1)) # (batch_size*k, 1)
+        row_idx_topk = row_idx
+        idx = tf.concat([row_idx_topk, col_idx_topk], 1) # (batch_size*k, 2)
+        word_topk = tf.gather_nd(word_topk2, idx) # (batch_size*k, )
+        word_topk = tf.reshape(word_topk, (-1, k)) # (batch_size, k)
+        self._output_ops.append(word_topk)
+
+        # set cumulated probability of completed sentences to -inf
+        is_end = tf.equal(word_topk, tf.ones_like(word_topk, dtype=tf.int32))
+        logit_topk = tf.where(is_end, -100000000*tf.ones_like(logit_topk), logit_topk) 
+        end_idx = tf.where(is_end)
+        self._beam_cum_logit_ops.append(logit_topk)
+        self._beam_end_ops.append(end_idx)
+
+        wordids = framework.util.expanded_op.flatten(word_topk) # (batch_size*k,)
+
+        # rearrange state indexs based on selection
+        states = nest.flatten(states)
+        _states = []
+        for state in states:
+          state = tf.reshape(state, (batch_size, k, -1))
+          col_pre = tf.reshape(pre, (-1, 1)) # (batch_size*k, 1)
+          row_pre = row_idx # (batch_size*k, 1)
+          idx = tf.concat([row_pre, col_pre], 1) # (batch_size*k, 2)
+          state = tf.gather_nd(state, idx)
+          _states.append(state)
+        states = nest.pack_sequence_as(state_struct, _states)
