@@ -259,27 +259,32 @@ def predict_in_tst(trntst, sess, tst_reader, predict_file):
   for data in tst_reader.yield_tst_batch(trntst.model_cfg.tst_batch_size):
     feed_dict = trntst._construct_encoder_feed_dict_in_tst(data)
     feed_dict.update(trntst._construct_decoder_feed_dict_in_tst(data))
-    wordids, cum_logits, pres, ends = sess.run(
-      [
-        op_dict['decoder.output_ops'], 
-        op_dict['decoder.beam_cum_logit_ops'], 
-        op_dict['decoder.beam_pre_ops'],
-        op_dict['decoder.beam_end_ops']
-      ], feed_dict=feed_dict)
-    # print np.array(pres)
-    # print np.array(wordids)
-    # print cum_logits
-    # pprint.pprint(ends)
-    sent_pool = framework.util.caption.utility.beamsearch_recover_captions(
-      wordids, cum_logits, pres, ends, trntst.model_cfg.decoder_cfg.sent_pool_size)
+    if trntst.model_cfg.decoder_cfg.greedy_or_beam:
+      sent_pool = sess.run(
+        op_dict['decoder.output_ops'], feed_dict=feed_dict)
+      sent_pool = np.array(sent_pool).T
 
-    for b in xrange(len(sent_pool)):
-      videoid = str(tst_reader.videoids[b+base])
+      for k, sent in enumerate(sent_pool):
+        videoid = tst_reader.videoids[base + k]
+        videoid2caption[videoid] = trntst.int2str(np.expand_dims(sent, 0))
 
-      # print sent_pool[b]
-      trntst.output_by_sent_mode(sent_pool[b], videoid, videoid2caption)
+      base += sent_pool.shape[0]
+    else:
+      wordids, cum_logits, pres, ends = sess.run(
+        [
+          op_dict['decoder.output_ops'], 
+          op_dict['decoder.beam_cum_logit_ops'], 
+          op_dict['decoder.beam_pre_ops'],
+          op_dict['decoder.beam_end_ops']
+        ], feed_dict=feed_dict)
+      sent_pool = framework.util.caption.utility.beamsearch_recover_captions(
+        wordids, cum_logits, pres, ends, trntst.model_cfg.decoder_cfg.sent_pool_size)
 
-    base += len(sent_pool)
+      for b in xrange(len(sent_pool)):
+        videoid = str(tst_reader.videoids[b+base])
+        trntst.output_by_sent_mode(sent_pool[b], videoid, videoid2caption)
+
+      base += len(sent_pool)
 
   json.dump(videoid2caption, open(predict_file, 'w'))
 

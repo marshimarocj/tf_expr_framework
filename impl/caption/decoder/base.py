@@ -13,6 +13,7 @@ class ConfigBase(framework.model.proto.ProtoConfig):
     self.max_words_in_caption = 30
     self.num_words = 10870
 
+    self.greedy_or_beam = False
     self.beam_width = 5
     self.sent_pool_size = 5
 
