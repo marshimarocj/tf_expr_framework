@@ -130,7 +130,6 @@ class Decoder(base.DecoderBase):
         self._output_ops.append(word_topk)
         self._beam_cum_logit_ops.append(logit_topk)
         self._beam_pre_ops.append(tf.range(0, batch_size*k))
-        print word_topk.shape
         end_idx = tf.where(word_topk == 1)
         self._beam_end_ops.append(end_idx)
 
@@ -159,7 +158,6 @@ class Decoder(base.DecoderBase):
         self._beam_pre_ops.append(idx_topk//k)
 
         # set cumulated probability of completed sentences to -inf
-        print word_topk.shape
         logit_topk = tf.where(word_topk == 1, -100000000*tf.ones_like(logit_topk), logit_topk) 
         end_idx = tf.where(word_topk == 1)
         self._beam_cum_logit_ops.append(logit_topk)
@@ -273,9 +271,13 @@ class DecoderHiddenSet(base.DecoderBase):
       if i == 0:
         logit = tf.nn.xw_plus_b(outputs, self.softmax_W, self.softmax_B)
         logit_topk, word_topk = tf.nn.top_k(logit, k) # (batch_size, k)
+        tmp = (word_topk == 1)
+        print tmp.shape
+        end_idx = tf.where(word_topk == 1)
         self._output_ops.append(word_topk)
         self._beam_cum_logit_ops.append(logit_topk)
         self._beam_pre_ops.append(tf.range(0, batch_size*k))
+        self._beam_end_ops.append(end_idx)
 
         wordids = framework.util.expanded_op.flatten(word_topk)
 
@@ -300,6 +302,8 @@ class DecoderHiddenSet(base.DecoderBase):
         # in case never ending, manually set the last word to EOS
         self._output_ops.append(word_topk)
         self._beam_pre_ops.append(idx_topk//k)
+        tmp = (word_topk == 1)
+        print tmp.shape
 
         # set cumulated probability of completed sentences to -inf
         logit_topk = tf.where(word_topk == 1, -100000000*tf.ones_like(logit_topk), logit_topk) 
