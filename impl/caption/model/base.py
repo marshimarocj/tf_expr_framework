@@ -268,9 +268,11 @@ def predict_in_tst(trntst, sess, tst_reader, predict_file):
     sent_pool = framework.util.caption.utility.beamsearch_recover_captions(
       wordids, cum_logits, pres, ends, trntst.model_cfg.decoder_cfg.beam_width)
 
+    print len(sent_pool)
     for b in xrange(len(sent_pool)):
       videoid = str(tst_reader.videoids[b+base])
 
+      print sent_pool[b]
       trntst.output_by_sent_mode(sent_pool[b], videoid, videoid2caption)
 
     base += len(sent_pool)
