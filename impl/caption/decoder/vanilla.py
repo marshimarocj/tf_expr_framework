@@ -110,7 +110,6 @@ class Decoder(base.DecoderBase):
     scope.reuse_variables()
 
     state_size_struct = self.state_size
-    state_size = nest.flatten(state_size_struct)
 
     k = self.config.beam_width
     m = self.config.max_words_in_caption
@@ -140,8 +139,8 @@ class Decoder(base.DecoderBase):
         # expand state
         states = nest.flatten(states)
         states = [
-          tf.reshape(tf.tile(state, [1, k]), (-1, size)) # (batch_size*k, hidden_size)
-          for state, size in zip(states, state_size)
+          tf.reshape(tf.tile(state, [1, k]), (batch_size*k, -1)) # (batch_size*k, hidden_size)
+          for stat in states
         ]
         states = nest.pack_sequence_as(state_size_struct, states)
       else:
@@ -159,7 +158,19 @@ class Decoder(base.DecoderBase):
         wordids = word_topk = tf.gather_nd(word_topk2, idx) # (batch_size*k, )
         word_topk = tf.reshape(word_topk, (-1, k))
         self._output_ops.append(word_topk)
-        self._beam_pre_ops.append(idx_topk//k)
+        pre = idx_topk//k # (batch_size, k)
+        self._beam_pre_ops.append(pre)
+        # update states
+        states = nest.flatten(states)
+        _states = []
+        for state in states:
+          state = tf.reshape(state, (batch_size, k, -1))
+          col_pre = tf.reshape(pre, (-1, 1)) # (batch_size*k, 1)
+          row_pre = row_idx_topk # (batch_size*k, 1)
+          idx = tf.concat([row_pre, col_pre], 1) # (batch_size*k, 2)
+          state = tf.gather_nd(state, idx)
+          _states.append(state)
+        states = nest.pack_sequence_as(state_size_struct, states)
 
         # set cumulated probability of completed sentences to -inf
         is_end = tf.equal(word_topk, tf.ones_like(word_topk, dtype=tf.int32))
