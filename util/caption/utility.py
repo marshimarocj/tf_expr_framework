@@ -289,33 +289,74 @@ def beamsearch_word_decode(
   return sent_pool
 
 
-def beamsearch_recover_one_caption(wordids, pre, ith, word_loss=None):
-  """
-  wordids: list, the index corresponds to one time_step
-  pre: list, the index corresponds to one timestep
-  ith: the last idx of wordids
-  word_loss: if given, will output the array of each word's loss
-  """
+# def beamsearch_recover_one_caption(wordids, pre, ith, word_loss=None):
+#   """
+#   wordids: list, the index corresponds to one time_step
+#   pre: list, the index corresponds to one timestep
+#   ith: the last idx of wordids
+#   word_loss: if given, will output the array of each word's loss
+#   """
+#   time_step = len(wordids)
+#   caption = []
+#   caption_loss = []
 
-  time_step = len(wordids)
-  caption = []
-  caption_loss = []
+#   for t in xrange(time_step-1, 0, -1):
+#     caption.append(wordids[t][ith])
+#     if word_loss is not None:
+#       caption_loss.append(word_loss[t][ith])
+#     ith = pre[t][ith]
 
-  for t in xrange(time_step-1, 0, -1):
-    caption.append(wordids[t][ith])
-    if word_loss is not None:
-      caption_loss.append(word_loss[t][ith])
-    ith = pre[t][ith]
+#   caption.append(wordids[0][ith])
+#   if word_loss is not None:
+#     caption_loss.append(word_loss[0][ith])
 
-  caption.append(wordids[0][ith])
-  if word_loss is not None:
-    caption_loss.append(word_loss[0][ith])
+#   caption = np.array(caption, np.int32)[::-1]
+#   if word_loss is not None:
+#     caption_loss = np.array(caption_loss, np.float32)[::-1]
+#   else:
+#     caption_loss = np.empty(0)
 
-  caption = np.array(caption, np.int32)[::-1]
-  if word_loss is not None:
-    caption_loss = np.array(caption_loss, np.float32)[::-1]
-  else:
-    caption_loss = np.empty(0)
+#   return caption, caption_loss
 
-  return caption, caption_loss
 
+def beamsearch_recover_captions(wordids, cum_logits, pres, ends, topk):
+  batch_size = wordids[0].shape[0]
+  num_step = len(wordids)
+  sent_pool = [[] for _ in range(batch_size)]
+
+  for n in range(num_step):
+    _ends = ends[n]
+    for end in _ends:
+      b = end[0]
+      pre = pres[n][b, end[1]]
+      caption = []
+      logit = 0
+      for t in xrange(n-1, -1, -1):
+        if t == n-1:
+          logit = cum_logits[t][b, pre] / n
+        caption.append(wordids[t][b, pre])
+        pre = pres[t][b, pre]
+      caption = np.array(caption, np.int32)[::-1]
+      sent_pool[b].append((logit, caption))
+  _ends = ends[n]
+  for b in range(batch_size):
+    if len(sent_pool) >= topk:
+      continue
+    end_idxs = set([d[1] for d in _ends[b]])
+    for k in range(topk):
+      if k in end_idxs:
+        continue
+      pre = pres[n][b, k]
+      caption = []
+      logit = cum_logits[n][b, k]/(n+1)
+      pre = k
+      for t in xrange(n, -1, -1):
+        caption.append(wordids[t][b, pre])
+        pre = pres[t][b, pre]
+      caption = np.array(caption, np.int32)[::-1]
+      sent_pool[b].append((logit, caption))
+  out = []
+  for b, sents in enumerate(sent_pool):
+    sents = sorted(sents, key=lambda x:x[0], reverse=True)
+    out.append(sents[:topk])
+  return out

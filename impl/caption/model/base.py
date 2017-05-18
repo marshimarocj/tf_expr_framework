@@ -106,7 +106,6 @@ class EncoderDecoderBase(framework.model.proto.ModelCombiner):
     return {
       'loss_op': self.loss_op,
       'decoder.tst_ft_state_op': decoder.tst_ft_state,
-      'decoder.predict_prob_ops': decoder.predict_prob_ops,
       'decoder.output_ops': decoder.output_ops,
     }
 
@@ -116,8 +115,10 @@ class EncoderDecoderBase(framework.model.proto.ModelCombiner):
 
     return {
       'decoder.tst_ft_state_op': decoder.tst_ft_state,
-      'decoder.predict_prob_ops': decoder.predict_prob_ops,
       'decoder.output_ops': decoder.output_ops,
+      'decoder.beam_cum_logit_ops': decoder.beam_cum_logit_ops,
+      'decoder.beam_pre_ops': decoder.beam_pre_ops,
+      'decoder.beam_end_ops': decoder.beam_end_ops,
     }
 
 
@@ -196,30 +197,20 @@ class TrnTstBase(framework.model.trntst.TrnTst):
 
     return loss
 
-  # def output_by_sent_mode(self, sent_pool, videoid, videoid2caption):
-  #   sent_pool_size = self.model_cfg.decoder_cfg.sent_pool_size
-  #   if self.gen_sent_mode == 1:
-  #     captionid = np.expand_dims(sent_pool[0][1], 0)
-  #     videoid2caption[videoid] = self.int2str(captionid)[0]
-  #   elif self.gen_sent_mode == 2:
-  #     videoid2caption[videoid] = []
-  #     for k in xrange(sent_pool_size):
-  #       captionid = np.expand_dims(sent_pool[k][1], 0)
-  #       out = (
-  #         float(sent_pool[k][0]),
-  #         self.int2str(captionid)[0]
-  #       )
-  #       videoid2caption[videoid].append(out)
-  #   elif self.gen_sent_mode == 3:
-  #     videoid2caption[videoid] = []
-  #     for k in xrange(sent_pool_size):
-  #       captionid = np.expand_dims(sent_pool[k][1], 0)
-  #       out = (
-  #         float(sent_pool[k][0]),
-  #         self.int2str(captionid)[0],
-  #         [float(x) for x in sent_pool[k][2]]
-  #       )
-  #       videoid2caption[videoid].append(out)
+  def output_by_sent_mode(self, sent_pool, videoid, videoid2caption):
+    sent_pool_size = self.model_cfg.decoder_cfg.sent_pool_size
+    if self.gen_sent_mode == 1:
+      captionid = np.expand_dims(sent_pool[0][1], 0)
+      videoid2caption[videoid] = self.int2str(captionid)[0]
+    elif self.gen_sent_mode == 2:
+      videoid2caption[videoid] = []
+      for k in xrange(sent_pool_size):
+        captionid = np.expand_dims(sent_pool[k][1], 0)
+        out = (
+          float(sent_pool[k][0]),
+          self.int2str(captionid)[0]
+        )
+        videoid2caption[videoid].append(out)
 
   def _construct_feed_dict_in_trn(self, data):
     raise NotImplementedError("""please customize TrnTstBase._construct_encoder_feed_dict_in_trn""")
@@ -264,21 +255,25 @@ def predict_in_tst(trntst, sess, tst_reader, predict_file):
   videoid2caption = {}
   base = 0
   op_dict = trntst.model.op_in_tst()
-
-  max_words_in_caption = trntst.model_cfg.decoder_cfg.max_words_in_caption
-
   for data in tst_reader.yield_tst_batch(trntst.model_cfg.tst_batch_size):
     feed_dict = trntst._construct_encoder_feed_dict_in_tst(data)
     feed_dict.update(trntst._construct_decoder_feed_dict_in_tst(data))
-    sent_pool = sess.run(
-      op_dict['decoder.output_ops'], feed_dict=feed_dict)
-    sent_pool = np.array(sent_pool).T
+    wordids, cum_logits, pres, ends = sess.run(
+      [
+        op_dict['decoder.output_ops'], 
+        op_dict['decoder.beam_cum_logit_ops'], 
+        op_dict['decoder.beam_pre_ops'],
+        op_dict['decoder.beam_end_ops']
+      ], feed_dict=feed_dict)
+    sent_pool = framework.util.caption.utility.beamsearch_recover_captions(
+      wordids, cum-logits, pres, ends, trntst.model_cfg.beam_width)
 
-    for k, sent in enumerate(sent_pool):
-      videoid = str(tst_reader.videoids[base + k])
-      videoid2caption[videoid] = trntst.int2str(np.expand_dims(sent, 0))
+    for b in xrange(len(sent_pool)):
+      videoid = str(tst_reader.videoids[b+base])
 
-    base += sent_pool.shape[0]
+      trntst.output_by_sent_mode(sent_pool[b], videoid, videoid2caption)
+
+    base += len(sent_pool)
 
   json.dump(videoid2caption, open(predict_file, 'w'))
 

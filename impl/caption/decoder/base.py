@@ -58,8 +58,10 @@ class DecoderBase(framework.model.proto.ModelProto):
     self._logit_ops = tf.no_op()
     self._regularize_op = tf.no_op()
     # tst only
-    self._predict_prob_ops = []
     self._output_ops = []
+    self._beam_cum_logit_ops = []
+    self._beam_pre_ops = []
+    self._beam_end_ops = []
 
   ###############input###############
   @property
@@ -126,10 +128,22 @@ class DecoderBase(framework.model.proto.ModelProto):
     return self._output_ops
 
   @property
-  def predict_prob_ops(self):
-    if len(self._predict_prob_ops) == 0:
-      raise NotImplementedError("""please implement decoder.DecoderBase._predict_prob_ops""")
-    return self._predict_prob_ops
+  def beam_cum_logit_ops(self):
+    if len(self._beam_cum_logit_ops) == 0:
+      raise NotImplementedError("""please implement decoder.DecoderBase._beam_cum_logit_ops""")
+    return self._beam_cum_logit_ops
+
+  @property
+  def beam_pre_ops(self):
+    if len(self._beam_pre_ops) == 0:
+      raise NotImplementedError("""please implement decoder.DecoderBase._beam_pre_ops""")
+    return self._beam_pre_ops
+
+  @property
+  def beam_end_ops(self):
+    if len(self._beam_end_ops) == 0:
+      raise NotImplementedError("""please implement decoder.DecoderBase._beam_end_ops""")
+    return self._beam_end_ops
 
   @property
   def state_size(self):

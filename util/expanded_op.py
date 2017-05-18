@@ -39,6 +39,10 @@ def lplq_norm_on_attention(attentions, mask_sum, p, q,
   return attention_completeness, attention_sparsity
 
 
+def flatten(tensor):
+  return tf.reshape(tensor, (-1))
+
+
 # unified interface with LSTMCell's state_is_tuple mode
 class GRUCell(tf.contrib.rnn.RNNCell):
   """Gated Recurrent Unit cell (cf. http://arxiv.org/abs/1406.1078)."""
