@@ -136,7 +136,7 @@ class Decoder(base.DecoderBase):
         # expand state
         states = nest.flatten(states)
         states = [
-          tf.reshape(tf.tile(state, [1, k]), (-1, size[1])) # (batch_size*k, hidden_size)
+          tf.reshape(tf.tile(state, [1, k]), (-1, size)) # (batch_size*k, hidden_size)
           for state, size in zip(states, state_size)
         ]
         states = nest.pack_sequence_as(state_size_struct, states)
@@ -278,7 +278,7 @@ class DecoderHiddenSet(base.DecoderBase):
         # expand state
         states = nest.flatten(states)
         states = [
-          tf.reshape(tf.tile(state, [1, k]), (-1, size[1])) # (batch_size*k, hidden_size)
+          tf.reshape(tf.tile(state, [1, k]), (-1, size)) # (batch_size*k, hidden_size)
           for state, size in zip(states, state_size)
         ]
         states = nest.pack_sequence_as(state_size_struct, states)
