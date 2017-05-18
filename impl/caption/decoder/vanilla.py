@@ -276,10 +276,8 @@ class DecoderHiddenSet(base.DecoderBase):
       outputs, states = cell(input, states)
       logits = tf.nn.xw_plus_b(outputs, self.softmax_W, self.softmax_B) # (batch_size, num_words)
       wordids = tf.argmax(logits, axis=1)
-      predict_prob = tf.nn.softmax(logits) # (batch_size, num_words)
 
       self._output_ops.append(wordids)
-      self._predict_prob_ops.append(predict_prob)
 
   def _beam_search_word_steps(self, cell, scope):
     state_struct = self.state_size
