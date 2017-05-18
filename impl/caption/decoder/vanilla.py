@@ -135,7 +135,7 @@ class Decoder(base.DecoderBase):
         self._beam_cum_logit_ops.append(logit_topk)
         self._beam_end_ops.append(end_idx)
 
-        wordids = framework.util.expanded_op.flatten(word_topk)
+        wordids = framework.util.expanded_op.flatten(word_topk) # (batch_size*k,)
 
         # expand state
         states = nest.flatten(states)
@@ -146,8 +146,8 @@ class Decoder(base.DecoderBase):
         states = nest.pack_sequence_as(state_size_struct, states)
       else:
         # select top k*k for each video feature
-        logit = tf.nn.xw_plus_b(outputs, self.softmax_W, self.softmax_B)
-        logit += tf.expand_dims(framework.util.expanded_op.flatten(self._beam_cum_logit_ops[-1]), 1)
+        logit = tf.nn.xw_plus_b(outputs, self.softmax_W, self.softmax_B) # (batch_size*k, 1)
+        logit += tf.reshape(self._beam_cum_logit_ops[-1], (-1, 1))
         logit_topk2, word_topk2 = tf.nn.top_k(logit, k) # (batch_size*k, k)
         logit_topk2 = tf.reshape(logit_topk2, (-1, k*k)) # (batch_size, k*k)
         word_topk2 = tf.reshape(word_topk2, (-1, k*k)) # (batch_size, k*k)
@@ -156,7 +156,7 @@ class Decoder(base.DecoderBase):
         row_idx_topk = tf.tile(tf.expand_dims(tf.range(0, batch_size), 1), (1, k)) # (batch_size, k)
         row_idx_topk = tf.reshape(row_idx_topk, (-1, 1)) # (batch_size*k, 1)
         idx = tf.concat([row_idx_topk, col_idx_topk], 1) # (batch_size*k, 2)
-        word_topk = tf.gather_nd(word_topk2, idx) # (batch_size*k, 1)
+        wordids = word_topk = tf.gather_nd(word_topk2, idx) # (batch_size*k, )
         word_topk = tf.reshape(word_topk, (-1, k))
         # in case never ending, manually set the last word to EOS
         self._output_ops.append(word_topk)
@@ -297,8 +297,8 @@ class DecoderHiddenSet(base.DecoderBase):
         states = nest.pack_sequence_as(state_size_struct, states)
       else:
         # select top k*k for each video feature
-        logit = tf.nn.xw_plus_b(outputs, self.softmax_W, self.softmax_B)
-        logit += tf.expand_dims(framework.util.expanded_op.flatten(self._beam_cum_logit_ops[-1]), 1)
+        logit = tf.nn.xw_plus_b(outputs, self.softmax_W, self.softmax_B) # (batch_size*k, n)
+        logit += tf.reshape(self._beam_cum_logit_ops[-1], (-1, 1))
         logit_topk2, word_topk2 = tf.nn.top_k(logit, k) # (batch_size*k, k)
         logit_topk2 = tf.reshape(logit_topk2, (-1, k*k)) # (batch_size, k*k)
         word_topk2 = tf.reshape(word_topk2, (-1, k*k)) # (batch_size, k*k)
