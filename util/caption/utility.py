@@ -339,6 +339,7 @@ def beamsearch_recover_captions(wordids, cum_logits, pres, ends, topk):
       caption = np.array(caption, np.int32)[::-1]
       sent_pool[b].append((logit, caption))
   _ends = ends[n]
+  print sent_pool
   for b in range(batch_size):
     if len(sent_pool) >= topk:
       continue
