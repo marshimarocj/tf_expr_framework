@@ -140,7 +140,7 @@ class Decoder(base.DecoderBase):
         states = nest.flatten(states)
         states = [
           tf.reshape(tf.tile(state, [1, k]), (batch_size*k, -1)) # (batch_size*k, hidden_size)
-          for stat in states
+          for state in states
         ]
         states = nest.pack_sequence_as(state_size_struct, states)
       else:
@@ -152,7 +152,8 @@ class Decoder(base.DecoderBase):
         word_topk2 = tf.reshape(word_topk2, (-1, k*k)) # (batch_size, k*k)
         logit_topk, idx_topk = tf.nn.top_k(logit_topk2, k) # (batch_size, k)
         col_idx_topk = tf.reshape(idx_topk, (-1, 1)) # (batch_size*k, 1)
-        row_idx_topk = tf.tile(tf.expand_dims(tf.range(0, batch_size), 1), (1, k)) # (batch_size, k)
+        row_idx_topk = tf.tile(tf.expand_dims(tf.range(0, batch_size), 1), (1, k)) # (batch_size, k) 
+        # [[0...0], ..., [batch_size-1...batch_size-1]]
         row_idx_topk = tf.reshape(row_idx_topk, (-1, 1)) # (batch_size*k, 1)
         idx = tf.concat([row_idx_topk, col_idx_topk], 1) # (batch_size*k, 2)
         wordids = word_topk = tf.gather_nd(word_topk2, idx) # (batch_size*k, )
