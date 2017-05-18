@@ -247,7 +247,7 @@ class DecoderHiddenSet(base.DecoderBase):
 
   def _beam_search_word_steps(self, cell, scope):
 
-    state_size_struct = self.state_size()
+    state_size_struct = self.state_size
     state_size = nest.flatten(state_size_struct)
 
     k = self.config.beam_width
