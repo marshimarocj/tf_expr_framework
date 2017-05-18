@@ -52,7 +52,7 @@ class Decoder(base.DecoderBase):
       with tf.variable_scope(self.name_scope) as scope:
         cell = tf.contrib.rnn.MultiRNNCell(self._cells, state_is_tuple=True)
         self._tst_ft_state = self._ft_step(cell, scope, False)
-        self._greedy_word_steps(cell, scope)
+        self._beam_search_word_steps(cell, scope)
 
   def build_inference_graph_in_trn_tst(self, basegraph):
     with basegraph.as_default():
@@ -190,7 +190,7 @@ class DecoderHiddenSet(base.DecoderBase):
       with tf.variable_scope(self.name_scope) as scope:
         cell = tf.contrib.rnn.MultiRNNCell(self._cells, state_is_tuple=True)
         self._tst_ft_state = self._ft_step(cell, scope, None)
-        self._greedy_word_steps(cell, scope)
+        self._beam_search_word_steps(cell, scope)
 
   def build_inference_graph_in_trn_tst(self, basegraph):
     with basegraph.as_default():
@@ -229,18 +229,75 @@ class DecoderHiddenSet(base.DecoderBase):
     outputs = tf.concat(outputs, 0)
     self._logit_ops = tf.nn.xw_plus_b(outputs, self.softmax_W, self.softmax_B)
 
-  # def _greedy_word_steps(self, cell, scope):
-  #   wordids = self._init_wordids # (batch_size,)
-  #   states = self._tst_ft_state
-  #   for i in xrange(self._config.max_words_in_caption):
-  #     if i > 0:
-  #       scope.reuse_variables()
+  def _greedy_word_steps(self, cell, scope):
+    wordids = self._init_wordids # (batch_size,)
+    states = self._tst_ft_state
+    for i in xrange(self._config.max_words_in_caption):
+      if i > 0:
+        scope.reuse_variables()
 
-  #     input = tf.nn.embedding_lookup(self.word_embedding_W, wordids)
-  #     outputs, states = cell(input, states)
-  #     logits = tf.nn.xw_plus_b(outputs, self.softmax_W, self.softmax_B) # (batch_size, num_words)
-  #     wordids = tf.argmax(logits, axis=1)
-  #     predict_prob = tf.nn.softmax(logits) # (batch_size, num_words)
+      input = tf.nn.embedding_lookup(self.word_embedding_W, wordids)
+      outputs, states = cell(input, states)
+      logits = tf.nn.xw_plus_b(outputs, self.softmax_W, self.softmax_B) # (batch_size, num_words)
+      wordids = tf.argmax(logits, axis=1)
+      predict_prob = tf.nn.softmax(logits) # (batch_size, num_words)
 
-  #     self._output_ops.append(wordids)
-  #     self._predict_prob_ops.append(predict_prob)
+      self._output_ops.append(wordids)
+      self._predict_prob_ops.append(predict_prob)
+
+  def _beam_search_word_steps(self, cell, scope):
+
+    state_size_struct = self.state_size()
+    state_size = nest.flatten(state_size_struct)
+
+    k = self.config.beam_width
+    m = self.config.max_words_in_caption
+    n = self.config.num_words
+    batch_size = tf.shape(self.init_wordids)[0]
+
+    wordids = self._init_wordids # (batch_size,)
+    states = self._tst_ft_state
+    for i in xrange(m):
+      if i > 0:
+        scope.reuse_variables()
+
+      input = tf.nn.embedding_lookup(self.word_embedding_W, wordids) 
+      # (batch_size,) in step 0 and (batch_size*k,) in other steps
+      outputs, states = cell(input, states)
+
+      if i == 0:
+        logit = tf.nn.xw_plus_b(outputs, self.softmax_W, self.softmax_B)
+        logit_topk, word_topk = tf.nn.top_k(logit, k) # (batch_size, k)
+        self._output_ops.append(word_topk)
+        self._beam_cum_logit_ops.append(logit_topk)
+        self._beam_pre_ops.append(tf.range(0, batch_size*k))
+
+        wordids = utility.flatten(word_topk)
+
+        # expand state
+        states = nest.flatten(states)
+        states = [
+          tf.reshape(tf.tile(state, [1, k]), (-1, size[1])) # (batch_size*k, hidden_size)
+          for state, size in zip(states, state_size)
+        ]
+        states = nest.pack_sequence_as(state_size_struct, states)
+      else:
+        # select top k*k for each video feature
+        logit = tf.nn.xw_plus_b(outputs, self.softmax_W, self.softmax_B)
+        logit += tf.expand_dims(utility.flatten(self._beam_logit_ops[-1]), 1)
+        logit_topk2, word_topk2 = tf.nn.top_k(logit, k) # (batch_size*k, k)
+        logit_topk2 = tf.reshape(logit_topk2, (-1, k*k)) # (batch_size, k*k)
+        word_topk2 = tf.reshape(word_topk2, (-1, k*k)) # (batch_size, k*k)
+        logit_topk, idx_topk = tf.nn.top_k(logit_topk2, k) # (batch_size, k)
+        idx = tf.concat([tf.expand_dims(tf.range(0, batch_size), 0), idx_topk], 1)
+        word_topk = tf.gather_nd(word_topk2, idx)
+        word_topk = tf.reshape(word_topk, (-1, k))
+        # in case never ending, manually set the last word to EOS
+        self._output_ops.append(word_topk)
+        self._beam_pre_ops.append(idx_topk//k)
+
+        # set cumulated probability of completed sentences to -inf
+        logit_topk = tf.where(word_topk == 1, -100000000*tf.ones_like(logit_topk), logit_topk) 
+        end_idx = tf.where(word_topk == 1)
+        self._beam_cum_logit_ops.append(logit_topk)
+        self._beam_end_ops.append(end_idx)
