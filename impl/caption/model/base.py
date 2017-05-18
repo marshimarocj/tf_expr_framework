@@ -3,6 +3,7 @@ import sys
 import json
 import cPickle
 import random
+import pprint
 
 import tensorflow as tf
 from tensorflow.python.util import nest
@@ -266,8 +267,9 @@ def predict_in_tst(trntst, sess, tst_reader, predict_file):
         op_dict['decoder.beam_end_ops']
       ], feed_dict=feed_dict)
     # print pres
-    print np.array(wordids)
+    # print np.array(wordids)
     # print cum_logits
+    pprint.pprint(ends)
     sent_pool = framework.util.caption.utility.beamsearch_recover_captions(
       wordids, cum_logits, pres, ends, trntst.model_cfg.decoder_cfg.sent_pool_size)
 
