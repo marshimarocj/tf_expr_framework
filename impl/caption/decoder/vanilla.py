@@ -1,6 +1,7 @@
 import tensorflow as tf
 from tensorflow.python.util import nest
 
+import framework.util.caption.utility
 import base
 
 
