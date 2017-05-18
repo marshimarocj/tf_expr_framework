@@ -265,7 +265,8 @@ def predict_in_tst(trntst, sess, tst_reader, predict_file):
         op_dict['decoder.beam_pre_ops'],
         op_dict['decoder.beam_end_ops']
       ], feed_dict=feed_dict)
-    print pres
+    # print pres
+    print wordids
     sent_pool = framework.util.caption.utility.beamsearch_recover_captions(
       wordids, cum_logits, pres, ends, trntst.model_cfg.decoder_cfg.sent_pool_size)
 
