@@ -353,9 +353,9 @@ def beamsearch_recover_captions(wordids, cum_logits, pres, ends, pool_size):
       b2ks[b] = set()
     b2ks[b].add(k)
   for b in range(batch_size):
-    if len(sent_pool) >= pool_size:
+    if len(sent_pool[b]) >= pool_size:
       continue
-    end_idxs = b2ks[b]
+    end_idxs = b2ks[b] if b in b2ks else set()
     for k in range(beam_width):
       if k in end_idxs:
         continue
