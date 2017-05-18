@@ -266,7 +266,7 @@ def predict_in_tst(trntst, sess, tst_reader, predict_file):
         op_dict['decoder.beam_end_ops']
       ], feed_dict=feed_dict)
     sent_pool = framework.util.caption.utility.beamsearch_recover_captions(
-      wordids, cum_logits, pres, ends, trntst.model_cfg.beam_width)
+      wordids, cum_logits, pres, ends, trntst.model_cfg.decoder_cfg.beam_width)
 
     for b in xrange(len(sent_pool)):
       videoid = str(tst_reader.videoids[b+base])
