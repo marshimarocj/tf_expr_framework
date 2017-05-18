@@ -159,8 +159,8 @@ class Decoder(base.DecoderBase):
         self._beam_pre_ops.append(idx_topk//k)
 
         # set cumulated probability of completed sentences to -inf
-        logit_topk = tf.where(word_topk == 1, -100000000*tf.ones_like(logit_topk), logit_topk) 
         print word_topk.shape
+        logit_topk = tf.where(word_topk == 1, -100000000*tf.ones_like(logit_topk), logit_topk) 
         end_idx = tf.where(word_topk == 1)
         self._beam_cum_logit_ops.append(logit_topk)
         self._beam_end_ops.append(end_idx)
