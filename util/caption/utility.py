@@ -322,7 +322,7 @@ def beamsearch_word_decode(
 # pool_size <= beam_width
 def beamsearch_recover_captions(wordids, cum_logits, pres, ends, pool_size):
   batch_size = wordids[0].shape[0]
-  beam_width = wordis[0].shape[1]
+  beam_width = wordids[0].shape[1]
   num_step = len(wordids)
   sent_pool = [[] for _ in range(batch_size)]
 
