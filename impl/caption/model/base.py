@@ -272,7 +272,7 @@ def predict_in_tst(trntst, sess, tst_reader, predict_file):
 
       for k, sent in enumerate(sent_pool):
         videoid = tst_reader.videoids[base + k]
-        videoid2caption[videoid] = trntst.int2str(np.expand_dims(sent, 0))
+        videoid2caption[videoid] = trntst.int2str(np.expand_dims(sent, 0))[0]
 
       base += sent_pool.shape[0]
     else:
