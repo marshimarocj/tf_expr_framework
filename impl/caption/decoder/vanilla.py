@@ -317,8 +317,8 @@ class DecoderHiddenSet(base.DecoderBase):
         # expand state
         states = nest.flatten(states) # (batch_size, hidden_size)
         states = [
-          tf.reshape(tf.tile(state, [1, k]), (batch_size*k, -1)) # (batch_size*k, hidden_size)
-          for state in states
+          tf.reshape(tf.tile(state, [1, k]), (-1, state_size)) # (batch_size*k, hidden_size)
+          for state, state_size in zip(states, state_sizes)
         ]
         states = nest.pack_sequence_as(state_struct, states)
       else:
