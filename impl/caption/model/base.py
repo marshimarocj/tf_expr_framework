@@ -114,7 +114,7 @@ class EncoderDecoderBase(framework.model.proto.ModelCombiner):
     encoder = self.model_protos[0]
     decoder = self.model_protos[1]
 
-    if self.config.greedy_or_beam:
+    if self.config.decoder_cfg.greedy_or_beam:
       return {
         'decoder.tst_ft_state_op': decoder.tst_ft_state,
         'decoder.output_ops': decoder.output_ops,
