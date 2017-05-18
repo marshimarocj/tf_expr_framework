@@ -367,7 +367,7 @@ def beamsearch_recover_captions(wordids, cum_logits, pres, ends, pool_size):
         caption.append(wordids[t][b, pre])
         pre = pres[t][b, pre]
       caption = np.array(caption, np.int32)[::-1]
-      if len(sent_pool[b]) < pool_szie:
+      if len(sent_pool[b]) < pool_size:
         sent_pool[b].append((logit, caption))
 
   out = []
