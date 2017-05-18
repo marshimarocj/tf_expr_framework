@@ -170,7 +170,7 @@ class Decoder(base.DecoderBase):
           idx = tf.concat([row_pre, col_pre], 1) # (batch_size*k, 2)
           state = tf.gather_nd(state, idx)
           _states.append(state)
-        states = nest.pack_sequence_as(state_size_struct, states)
+        states = nest.pack_sequence_as(state_size_struct, _states)
 
         # set cumulated probability of completed sentences to -inf
         is_end = tf.equal(word_topk, tf.ones_like(word_topk, dtype=tf.int32))
