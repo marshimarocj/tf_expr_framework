@@ -320,8 +320,9 @@ def beamsearch_word_decode(
 
 
 # pool_size <= beam_width
-def beamsearch_recover_captions(wordids, cum_logits, pres, ends, beam_width, pool_size):
+def beamsearch_recover_captions(wordids, cum_logits, pres, ends, pool_size):
   batch_size = wordids[0].shape[0]
+  beam_width = wordis[0].shape[1]
   num_step = len(wordids)
   sent_pool = [[] for _ in range(batch_size)]
 
@@ -342,7 +343,7 @@ def beamsearch_recover_captions(wordids, cum_logits, pres, ends, beam_width, poo
       if len(sent_pool[b]) <  pool_size:
         sent_pool[b].append((logit, caption))
 
-  # in case never ending, treat the last word as EOS
+  # in case there's not enough automatically ending candiates
   _ends = ends[n]
   b2ks = {}
   for end in _ends:
@@ -366,10 +367,11 @@ def beamsearch_recover_captions(wordids, cum_logits, pres, ends, beam_width, poo
         caption.append(wordids[t][b, pre])
         pre = pres[t][b, pre]
       caption = np.array(caption, np.int32)[::-1]
-      sent_pool[b].append((logit, caption))
+      if len(sent_pool[b]) < pool_szie:
+        sent_pool[b].append((logit, caption))
 
   out = []
   for b, sents in enumerate(sent_pool):
     sents = sorted(sents, key=lambda x:x[0], reverse=True)
-    out.append(sents[:pool_size])
+    out.append(sents)
   return out
