@@ -151,8 +151,11 @@ class Decoder(base.DecoderBase):
         logit_topk2 = tf.reshape(logit_topk2, (-1, k*k)) # (batch_size, k*k)
         word_topk2 = tf.reshape(word_topk2, (-1, k*k)) # (batch_size, k*k)
         logit_topk, idx_topk = tf.nn.top_k(logit_topk2, k) # (batch_size, k)
-        idx = tf.concat([tf.expand_dims(tf.range(0, batch_size), 1), idx_topk], 1)
-        word_topk = tf.gather_nd(word_topk2, idx)
+        col_idx_topk = tf.reshape(idx_topk, (-1, 1)) # (batch_size*k, 1)
+        row_idx_topk = tf.tile(tf.expand_dims(tf.range(0, batch_size), 1), (1, k)) # (batch_size, k)
+        row_idx_topk = tf.reshape(row_idx_topk, (-1, 1)) # (batch_size*k, 1)
+        idx = tf.concat([row_idx_topk, col_idx_topk], 1) # (batch_size*k, 2)
+        word_topk = tf.gather_nd(word_topk2, idx) # (batch_size*k, 1)
         word_topk = tf.reshape(word_topk, (-1, k))
         # in case never ending, manually set the last word to EOS
         self._output_ops.append(word_topk)
