@@ -276,6 +276,7 @@ class DecoderHiddenSet(base.DecoderBase):
 
   def _beam_search_word_steps(self, cell, scope):
     state_struct = self.state_size
+    state_sizes = nest.flatten(state_struct)
 
     k = self.config.beam_width
     m = self.config.max_words_in_caption
@@ -349,8 +350,8 @@ class DecoderHiddenSet(base.DecoderBase):
         # rearrange state indexs based on selection
         states = nest.flatten(states)
         _states = []
-        for state in states:
-          state = tf.reshape(state, (batch_size, k, -1))
+        for state, state_size in zip(states, state_sizes):
+          state = tf.reshape(state, (-1, k, state_size))
           col_pre = tf.reshape(pre, (-1, 1)) # (batch_size*k, 1)
           row_pre = row_idx # (batch_size*k, 1)
           idx = tf.concat([row_pre, col_pre], 1) # (batch_size*k, 2)
