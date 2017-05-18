@@ -130,6 +130,8 @@ class Decoder(base.DecoderBase):
         self._output_ops.append(word_topk)
         self._beam_cum_logit_ops.append(logit_topk)
         self._beam_pre_ops.append(tf.range(0, batch_size*k))
+        end_idx = tf.where(word_topk == 1)
+        self._beam_end_ops.append(end_idx)
 
         wordids = framework.util.expanded_op.flatten(word_topk)
 
@@ -143,7 +145,7 @@ class Decoder(base.DecoderBase):
       else:
         # select top k*k for each video feature
         logit = tf.nn.xw_plus_b(outputs, self.softmax_W, self.softmax_B)
-        logit += tf.expand_dims(framework.util.expanded_op.flatten(self._beam_logit_ops[-1]), 1)
+        logit += tf.expand_dims(framework.util.expanded_op.flatten(self._beam_cum_logit_ops[-1]), 1)
         logit_topk2, word_topk2 = tf.nn.top_k(logit, k) # (batch_size*k, k)
         logit_topk2 = tf.reshape(logit_topk2, (-1, k*k)) # (batch_size, k*k)
         word_topk2 = tf.reshape(word_topk2, (-1, k*k)) # (batch_size, k*k)
@@ -285,7 +287,7 @@ class DecoderHiddenSet(base.DecoderBase):
       else:
         # select top k*k for each video feature
         logit = tf.nn.xw_plus_b(outputs, self.softmax_W, self.softmax_B)
-        logit += tf.expand_dims(framework.util.expanded_op.flatten(self._beam_logit_ops[-1]), 1)
+        logit += tf.expand_dims(framework.util.expanded_op.flatten(self._beam_cum_logit_ops[-1]), 1)
         logit_topk2, word_topk2 = tf.nn.top_k(logit, k) # (batch_size*k, k)
         logit_topk2 = tf.reshape(logit_topk2, (-1, k*k)) # (batch_size, k*k)
         word_topk2 = tf.reshape(word_topk2, (-1, k*k)) # (batch_size, k*k)
