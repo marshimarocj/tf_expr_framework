@@ -128,13 +128,15 @@ def beam_decode(next_step_func,
 
       wordids = flatten(word_topk) # (batch_size*k,)
 
-      # expand state
+      # expand state and outputs
       states = nest.flatten(states) # (batch_size, hidden_size)
       states = [
         tf.reshape(tf.tile(state, [1, k]), (-1, state_size)) # (batch_size*k, hidden_size)
         for state, state_size in zip(states, state_sizes)
       ]
       states = nest.pack_sequence_as(state_struct, states)
+      if outputs is not None:
+        outputs = tf.reshape(tf.tile(outputs, [1, k]), (-1, tf.shape(outputs)[1]))
     else:
       # first select top k*k; then select top k
       logit += tf.reshape(beam_cum_logit_ops[-1], (-1, 1))
