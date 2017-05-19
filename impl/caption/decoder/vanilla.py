@@ -198,7 +198,7 @@ class Decoder(base.DecoderBase):
     next_step_func = next_step_func_handle(self, cell)
     op_groups = framework.util.expanded_op.beam_decode(
       next_step_func,
-      self._init_wordids, self._tst_ft_state, 
+      self._init_wordids, self._tst_ft_state, scope,
       self.state_size, self.config.beam_width, self.config.max_words_in_caption, 
       reuse_only_after_first_step=False)
     self._output_ops = op_groups[0]
@@ -384,7 +384,7 @@ class DecoderHiddenSet(base.DecoderBase):
     next_step_func = next_step_func_handle(self, cell)
     op_groups = framework.util.expanded_op.beam_decode(
       next_step_func,
-      self._init_wordids, self._tst_ft_state, 
+      self._init_wordids, self._tst_ft_state, scope,
       self.state_size, self.config.beam_width, self.config.max_words_in_caption, 
       reuse_only_after_first_step=True)
     self._output_ops = op_groups[0]

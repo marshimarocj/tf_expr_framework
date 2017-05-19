@@ -76,7 +76,7 @@ class GRUCell(tf.contrib.rnn.RNNCell):
 
 
 def beam_decode(next_step_func, 
-    init_input, init_state, 
+    init_input, init_state, scope,
     state_size, beam_width, num_step, 
     reuse_only_after_first_step=True, init_output=None):
   if not reuse_only_after_first_step:
