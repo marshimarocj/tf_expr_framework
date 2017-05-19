@@ -112,9 +112,7 @@ def beam_decode(next_step_func,
     # outputs, states = cell(input, states)
     # logit = tf.nn.xw_plus_b(outputs, self.softmax_W, self.softmax_B)
     # logit = tf.nn.log_softmax(logit)
-    print i, len(states)
     logit, states, outputs = next_step_func(wordids, states, outputs)
-    print i, len(states)
 
     if i == 0:
       logit_topk, word_topk = tf.nn.top_k(logit, k) # (batch_size, k)
@@ -133,13 +131,13 @@ def beam_decode(next_step_func,
 
       # expand state
       states = nest.flatten(states) # (batch_size, hidden_size)
-      print i, len(states)
+      # print i, len(states)
       states = [
         tf.reshape(tf.tile(state, [1, k]), (-1, state_size)) # (batch_size*k, hidden_size)
         for state, state_size in zip(states, state_sizes)
       ]
-      print i, len(states)
-      print i, len(state_struct)
+      # print i, len(states)
+      # print i, len(state_struct)
       states = nest.pack_sequence_as(state_struct, states)
     else:
       # first select top k*k; then select top k
