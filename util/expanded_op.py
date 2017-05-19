@@ -1,4 +1,5 @@
 import tensorflow as tf
+from tensorflow.python.util import nest
 
 
 # Note: the concat operation leads to batch_size as the inner for loop and 
