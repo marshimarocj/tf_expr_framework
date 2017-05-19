@@ -163,7 +163,7 @@ def beam_decode(next_step_func,
       beam_cum_logit_ops.append(logit_topk)
       beam_end_ops.append(end_idx)
 
-      wordids = framework.util.expanded_op.flatten(word_topk) # (batch_size*k,)
+      wordids = flatten(word_topk) # (batch_size*k,)
 
       # rearrange state indexs based on selection
       states = nest.flatten(states)
