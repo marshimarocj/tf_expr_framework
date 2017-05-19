@@ -111,7 +111,7 @@ def beam_decode(next_step_func,
     # outputs, states = cell(input, states)
     # logit = tf.nn.xw_plus_b(outputs, self.softmax_W, self.softmax_B)
     # logit = tf.nn.log_softmax(logit)
-    logit, states, outputs = next_step_func(wordids, states, outputs)
+    logit, states, outputs = next_step_func(wordids, states, outputs, i)
 
     if i == 0:
       logit_topk, word_topk = tf.nn.top_k(logit, k) # (batch_size, k)
