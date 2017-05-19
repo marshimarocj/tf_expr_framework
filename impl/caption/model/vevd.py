@@ -125,16 +125,19 @@ class TrnTst(base.TrnTstBase):
       np.zeros((batch_size, state_size), dtype=np.float)
       for state_size in nest.flatten(framework.impl.caption.decoder.state_size)
     ]
-    init_wordids = np.zeros((batch_size,), dtype=np.int32)
 
-    keys = [self.model._fts, self.model._init_wordids]
+    keys = [self.model._fts]
     keys += nest.flatten(self.model._init_state)
-    values = [fts, init_wordids] + state_init
+    values = [fts] + state_init
 
     return dict(zip(keys, values))
 
   def _construct_decoder_feed_dict_in_tst(self, data):
-    return {}
+    batch_size = data.shape[0]
+    init_wordids = np.zeros((batch_size,), dtype=np.int32)
+    return {
+      self.model._init_wordids: init_wordids,
+    }
 
   def predict_and_eval_in_val(self, sess, tst_reader, metrics):
     base.predict_eval_in_val(self, sess, tst_reader, metrics)
