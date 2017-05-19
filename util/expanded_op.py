@@ -84,6 +84,7 @@ def beam_decode(next_step_func,
 
   state_struct = state_size
   state_sizes = nest.flatten(state_struct)
+  print len(state_struct)
 
   k = beam_width
   m = num_step
@@ -138,7 +139,7 @@ def beam_decode(next_step_func,
         for state, state_size in zip(states, state_sizes)
       ]
       print i, len(states)
-      print i, len(state_sizes)
+      print i, len(state_struct)
       states = nest.pack_sequence_as(state_struct, states)
     else:
       # first select top k*k; then select top k
