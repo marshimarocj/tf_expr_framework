@@ -84,6 +84,7 @@ def beam_decode(next_step_func,
 
   state_struct = state_size
   state_sizes = nest.flatten(state_struct)
+  print state_sizes
 
   k = beam_width
   m = num_step
