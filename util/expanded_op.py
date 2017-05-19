@@ -78,7 +78,7 @@ class GRUCell(tf.contrib.rnn.RNNCell):
 def beam_decode(next_step_func, 
     init_input, init_state, 
     state_size, beam_width, num_step, 
-    reuse_only_after_first_step=True):
+    reuse_only_after_first_step=True, init_output=None):
   if not reuse_only_after_first_step:
     scope.reuse_variables()
 
@@ -101,6 +101,7 @@ def beam_decode(next_step_func,
 
   wordids = init_input # (batch_size,)
   states = init_state
+  outputs = init_output
   for i in xrange(m):
     if i > 0:
       scope.reuse_variables()
@@ -110,7 +111,7 @@ def beam_decode(next_step_func,
     # outputs, states = cell(input, states)
     # logit = tf.nn.xw_plus_b(outputs, self.softmax_W, self.softmax_B)
     # logit = tf.nn.log_softmax(logit)
-    logit, states = next_step_func(wordids, states)
+    logit, states, outputs = next_step_func(wordids, states, outputs)
 
     if i == 0:
       logit_topk, word_topk = tf.nn.top_k(logit, k) # (batch_size, k)

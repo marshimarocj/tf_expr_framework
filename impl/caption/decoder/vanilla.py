@@ -394,11 +394,11 @@ class DecoderHiddenSet(base.DecoderBase):
 
 
 def next_step_func_handle(model, cell):
-  def next_step_func(wordid, states):
+  def next_step_func(wordids, states, outputs=None):
     input = tf.nn.embedding_lookup(model.word_embedding_W, wordids) 
     outputs, states = cell(input, states)
     logit = tf.nn.xw_plus_b(outputs, model.softmax_W, model.softmax_B)
     logit = tf.nn.log_softmax(logit)
-    return logit, states
+    return logit, states, None
 
   return next_step_func
