@@ -117,7 +117,7 @@ class TrnTst(base.TrnTstBase):
     return dict(zip(keys, values))
 
   def _construct_encoder_feed_dict_in_tst(self, data):
-    fts = data
+    fts = data[0]
 
     batch_size = fts.shape[0]
     decoder = self.model.model_protos[1]
@@ -133,7 +133,7 @@ class TrnTst(base.TrnTstBase):
     return dict(zip(keys, values))
 
   def _construct_decoder_feed_dict_in_tst(self, data):
-    batch_size = data.shape[0]
+    batch_size = data[0].shape[0]
     init_wordids = np.zeros((batch_size,), dtype=np.int32)
     return {
       self.model._init_wordids: init_wordids,
