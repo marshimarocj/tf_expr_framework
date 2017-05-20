@@ -63,8 +63,30 @@ class Decoder(base.DecoderBase):
       with tf.variable_scope(self.name_scope) as scope:
         cells = []
         for cell in self._cells[:-1]:
-          cells.append(tf.contrib.rnn.DropoutWrapper(cell, input_keep_prob=0.5))
-        cells.append(tf.contrib.rnn.DropoutWrapper(self._cells[-1], input_keep_prob=0.5, output_keep_prob=0.5))
+          if self.config.recurrent:
+            cells.append(
+              tf.contrib.rnn.DropoutWrapper(cell, 
+                input_keep_prob=0.5, 
+                state_keep_prob=0.5, 
+                variational_recurrent=True, 
+                input_size=self.config.dim_hidden)
+            )
+          else:
+            cells.append(tf.contrib.rnn.DropoutWrapper(cell, input_keep_prob=0.5))
+        if self.config.recurrent:
+          cells.append(
+            tf.contrib.rnn.DropoutWrapper(self._cells[-1], 
+                input_keep_prob=0.5,
+                output_keep_prob=0.5,
+                state_keep_prob=0.5, 
+                variational_recurrent=True, 
+                input_size=self.config.dim_hidden)
+          )
+        else:
+          cells.append(
+            tf.contrib.rnn.DropoutWrapper(self._cells[-1], 
+              input_keep_prob=0.5, output_keep_prob=0.5)
+          )
         cell = tf.contrib.rnn.MultiRNNCell(cells, state_is_tuple=True)
 
         self._trn_ft_state = self._ft_step(cell, scope, False)
