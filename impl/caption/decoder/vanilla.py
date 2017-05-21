@@ -131,91 +131,6 @@ class Decoder(base.DecoderBase):
 
       self._output_ops.append(wordids)
 
-  # def _beam_search_word_steps(self, cell, scope):
-  #   scope.reuse_variables()
-
-  #   state_struct = self.state_size
-  #   state_sizes = nest.flatten(state_struct)
-
-  #   k = self.config.beam_width
-  #   m = self.config.max_words_in_caption
-  #   n = self.config.num_words
-  #   batch_size = tf.shape(self.init_wordids)[0]
-
-  #   # auxiliary idx variable for topk selection operations
-  #   row_idx = tf.tile(tf.expand_dims(tf.range(0, batch_size), 1), (1, k)) # (batch_size, k) 
-  #   row_idx = tf.reshape(row_idx, (-1, 1)) # (batch_size*k, 1)
-  #   # [0...0, ..., batch_size-1...batch_size-1]
-
-  #   wordids = self._init_wordids # (batch_size,)
-  #   states = self._tst_ft_state
-  #   for i in xrange(m):
-  #     # (batch_size,) in step 0 and (batch_size*k,) in other steps
-  #     input = tf.nn.embedding_lookup(self.word_embedding_W, wordids) 
-  #     outputs, states = cell(input, states)
-  #     logit = tf.nn.xw_plus_b(outputs, self.softmax_W, self.softmax_B)
-  #     logit = tf.nn.log_softmax(logit)
-
-  #     if i == 0:
-  #       logit_topk, word_topk = tf.nn.top_k(logit, k) # (batch_size, k)
-  #       self._output_ops.append(word_topk)
-  #       pre = -tf.ones((batch_size, k), dtype=tf.int32)
-  #       self._beam_pre_ops.append(pre)
-
-  #       # set cumulated probability of completed sentences to -inf
-  #       is_end = tf.equal(word_topk, tf.ones_like(word_topk, dtype=tf.int32))
-  #       logit_topk = tf.where(is_end, -100000000*tf.ones_like(logit_topk), logit_topk) 
-  #       end_idx = tf.where(is_end)
-  #       self._beam_cum_logit_ops.append(logit_topk)
-  #       self._beam_end_ops.append(end_idx)
-
-  #       wordids = framework.util.expanded_op.flatten(word_topk) # (batch_size*k,)
-
-  #       # expand state
-  #       states = nest.flatten(states) # (batch_size, hidden_size)
-  #       states = [
-  #         tf.reshape(tf.tile(state, [1, k]), (-1, state_size)) # (batch_size*k, hidden_size)
-  #         for state, state_size in zip(states, state_sizes)
-  #       ]
-  #       states = nest.pack_sequence_as(state_struct, states)
-  #     else:
-  #       # first select top k*k; then select top k
-  #       logit += tf.reshape(self._beam_cum_logit_ops[-1], (-1, 1))
-  #       logit_topk2, word_topk2 = tf.nn.top_k(logit, k) # (batch_size*k, k)
-  #       logit_topk2 = tf.reshape(logit_topk2, (-1, k*k)) # (batch_size, k*k)
-  #       word_topk2 = tf.reshape(word_topk2, (-1, k*k)) # (batch_size, k*k)
-  #       logit_topk, idx_topk = tf.nn.top_k(logit_topk2, k) # (batch_size, k)
-
-  #       pre = idx_topk//k # (batch_size, k)
-  #       self._beam_pre_ops.append(pre)
-  #       col_idx_topk = tf.reshape(idx_topk, (-1, 1)) # (batch_size*k, 1)
-  #       row_idx_topk = row_idx
-  #       idx = tf.concat([row_idx_topk, col_idx_topk], 1) # (batch_size*k, 2)
-  #       word_topk = tf.gather_nd(word_topk2, idx) # (batch_size*k, )
-  #       word_topk = tf.reshape(word_topk, (-1, k)) # (batch_size, k)
-  #       self._output_ops.append(word_topk)
-
-  #       # set cumulated probability of completed sentences to -inf
-  #       is_end = tf.equal(word_topk, tf.ones_like(word_topk, dtype=tf.int32))
-  #       logit_topk = tf.where(is_end, -100000000*tf.ones_like(logit_topk), logit_topk) 
-  #       end_idx = tf.where(is_end)
-  #       self._beam_cum_logit_ops.append(logit_topk)
-  #       self._beam_end_ops.append(end_idx)
-
-  #       wordids = framework.util.expanded_op.flatten(word_topk) # (batch_size*k,)
-
-  #       # rearrange state indexs based on selection
-  #       states = nest.flatten(states)
-  #       _states = []
-  #       for state, state_size in zip(states, state_sizes):
-  #         state = tf.reshape(state, (-1, k, state_size))
-  #         col_pre = tf.reshape(pre, (-1, 1)) # (batch_size*k, 1)
-  #         row_pre = row_idx # (batch_size*k, 1)
-  #         idx = tf.concat([row_pre, col_pre], 1) # (batch_size*k, 2)
-  #         state = tf.gather_nd(state, idx)
-  #         _states.append(state)
-  #       states = nest.pack_sequence_as(state_struct, _states)
-
   def _beam_search_word_steps(self, cell, scope):
     next_step_func = next_step_func_handle(self, cell)
     op_groups = framework.util.expanded_op.beam_decode(
@@ -268,8 +183,30 @@ class DecoderHiddenSet(base.DecoderBase):
       with tf.variable_scope(self.name_scope) as scope:
         cells = []
         for cell in self._cells[:-1]:
-          cells.append(tf.contrib.rnn.DropoutWrapper(cell, input_keep_prob=0.5))
-        cells.append(tf.contrib.rnn.DropoutWrapper(self._cells[-1], input_keep_prob=0.5, output_keep_prob=0.5))
+          if self.config.variational_recurrent:
+            cells.append(
+              tf.contrib.rnn.DropoutWrapper(cell, 
+                input_keep_prob=0.5, 
+                state_keep_prob=0.5, 
+                variational_recurrent=True, 
+                input_size=self.config.dim_input)
+            )
+          else:
+            cells.append(tf.contrib.rnn.DropoutWrapper(cell, input_keep_prob=0.5))
+        if self.config.variational_recurrent:
+          cells.append(
+            tf.contrib.rnn.DropoutWrapper(self._cells[-1], 
+                input_keep_prob=0.5,
+                output_keep_prob=0.5,
+                state_keep_prob=0.5, 
+                variational_recurrent=True, 
+                input_size=self.config.dim_input)
+          )
+        else:
+          cells.append(
+            tf.contrib.rnn.DropoutWrapper(self._cells[-1], 
+              input_keep_prob=0.5, output_keep_prob=0.5)
+          )
         cell = tf.contrib.rnn.MultiRNNCell(cells, state_is_tuple=True)
 
         self._trn_ft_state = self._ft_step(cell, scope, None)
@@ -315,92 +252,6 @@ class DecoderHiddenSet(base.DecoderBase):
       wordids = tf.argmax(logits, axis=1)
 
       self._output_ops.append(wordids)
-
-  # def _beam_search_word_steps(self, cell, scope):
-  #   state_struct = self.state_size
-  #   state_sizes = nest.flatten(state_struct)
-
-  #   k = self.config.beam_width
-  #   m = self.config.max_words_in_caption
-  #   n = self.config.num_words
-  #   batch_size = tf.shape(self.init_wordids)[0]
-
-  #   # auxiliary idx variable for topk selection operations
-  #   row_idx = tf.tile(tf.expand_dims(tf.range(0, batch_size), 1), (1, k)) # (batch_size, k) 
-  #   row_idx = tf.reshape(row_idx, (-1, 1)) # (batch_size*k, 1)
-  #   # [0...0, ..., batch_size-1...batch_size-1]
-
-  #   wordids = self._init_wordids # (batch_size,)
-  #   states = self._tst_ft_state
-  #   for i in xrange(m):
-  #     if i > 0:
-  #       scope.reuse_variables()
-
-  #     # (batch_size,) in step 0 and (batch_size*k,) in other steps
-  #     input = tf.nn.embedding_lookup(self.word_embedding_W, wordids) 
-  #     outputs, states = cell(input, states)
-  #     logit = tf.nn.xw_plus_b(outputs, self.softmax_W, self.softmax_B)
-  #     logit = tf.nn.log_softmax(logit)
-
-  #     if i == 0:
-  #       logit_topk, word_topk = tf.nn.top_k(logit, k) # (batch_size, k)
-  #       self._output_ops.append(word_topk)
-  #       pre = -tf.ones((batch_size, k), dtype=tf.int32)
-  #       self._beam_pre_ops.append(pre)
-
-  #       # set cumulated probability of completed sentences to -inf
-  #       is_end = tf.equal(word_topk, tf.ones_like(word_topk, dtype=tf.int32))
-  #       logit_topk = tf.where(is_end, -100000000*tf.ones_like(logit_topk), logit_topk) 
-  #       end_idx = tf.where(is_end)
-  #       self._beam_cum_logit_ops.append(logit_topk)
-  #       self._beam_end_ops.append(end_idx)
-
-  #       wordids = framework.util.expanded_op.flatten(word_topk) # (batch_size*k,)
-
-  #       # expand state
-  #       states = nest.flatten(states) # (batch_size, hidden_size)
-  #       states = [
-  #         tf.reshape(tf.tile(state, [1, k]), (-1, state_size)) # (batch_size*k, hidden_size)
-  #         for state, state_size in zip(states, state_sizes)
-  #       ]
-  #       states = nest.pack_sequence_as(state_struct, states)
-  #     else:
-  #       # first select top k*k; then select top k
-  #       logit += tf.reshape(self._beam_cum_logit_ops[-1], (-1, 1))
-  #       logit_topk2, word_topk2 = tf.nn.top_k(logit, k) # (batch_size*k, k)
-  #       logit_topk2 = tf.reshape(logit_topk2, (-1, k*k)) # (batch_size, k*k)
-  #       word_topk2 = tf.reshape(word_topk2, (-1, k*k)) # (batch_size, k*k)
-  #       logit_topk, idx_topk = tf.nn.top_k(logit_topk2, k) # (batch_size, k)
-
-  #       pre = idx_topk//k # (batch_size, k)
-  #       self._beam_pre_ops.append(pre)
-  #       col_idx_topk = tf.reshape(idx_topk, (-1, 1)) # (batch_size*k, 1)
-  #       row_idx_topk = row_idx
-  #       idx = tf.concat([row_idx_topk, col_idx_topk], 1) # (batch_size*k, 2)
-  #       word_topk = tf.gather_nd(word_topk2, idx) # (batch_size*k, )
-  #       word_topk = tf.reshape(word_topk, (-1, k)) # (batch_size, k)
-  #       self._output_ops.append(word_topk)
-
-  #       # set cumulated probability of completed sentences to -inf
-  #       is_end = tf.equal(word_topk, tf.ones_like(word_topk, dtype=tf.int32))
-  #       logit_topk = tf.where(is_end, -100000000*tf.ones_like(logit_topk), logit_topk) 
-  #       end_idx = tf.where(is_end)
-  #       self._beam_cum_logit_ops.append(logit_topk)
-  #       self._beam_end_ops.append(end_idx)
-
-  #       wordids = framework.util.expanded_op.flatten(word_topk) # (batch_size*k,)
-
-  #       # rearrange state indexs based on selection
-  #       states = nest.flatten(states)
-  #       _states = []
-  #       for state, state_size in zip(states, state_sizes):
-  #         state = tf.reshape(state, (-1, k, state_size))
-  #         col_pre = tf.reshape(pre, (-1, 1)) # (batch_size*k, 1)
-  #         row_pre = row_idx # (batch_size*k, 1)
-  #         idx = tf.concat([row_pre, col_pre], 1) # (batch_size*k, 2)
-  #         state = tf.gather_nd(state, idx)
-  #         _states.append(state)
-  #       states = nest.pack_sequence_as(state_struct, _states)
 
   def _beam_search_word_steps(self, cell, scope):
     next_step_func = next_step_func_handle(self, cell)
