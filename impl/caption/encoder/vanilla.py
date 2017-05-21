@@ -152,25 +152,26 @@ class AttentionFtEncoder(Encoder):
     if sum(self._config.dim_fts) != self._config.dim_output or self._config.dummy:
       with basegraph.as_default():
         with tf.variable_scope(self.name_scope):
-          scale = 1.0 / (sum(self._config.dim_fts) ** 0.5)
-          self.fc_W = tf.get_variable('fc_W', 
-            shape=(1, 1, sum(self._config.dim_fts), self._config.dim_output), dtype=tf.float32,
-            initializer=tf.random_uniform_initializer(-scale, scale))
-          self.fc_B = tf.get_variable('fc_B',
-            shape=(self._config.dim_output,), dtype=tf.float32,
-            initializer=tf.random_uniform_initializer(-0.1, 0.1))
+          if not self._config.dummy:
+            scale = 1.0 / (sum(self._config.dim_fts) ** 0.5)
+            self.fc_W = tf.get_variable('fc_W', 
+              shape=(1, 1, sum(self._config.dim_fts), self._config.dim_output), dtype=tf.float32,
+              initializer=tf.random_uniform_initializer(-scale, scale))
+            self.fc_B = tf.get_variable('fc_B',
+              shape=(self._config.dim_output,), dtype=tf.float32,
+              initializer=tf.random_uniform_initializer(-0.1, 0.1))
 
   def build_inference_graph_in_tst(self, basegraph):
     with basegraph.as_default():
       with tf.variable_scope(self.name_scope):
         if sum(self._config.dim_fts) == self._config.dim_output and not self._config.dummy:
-          self._feature_op = tf.identity(self._fts)
+          self._feature_op = self._fts
         else:
-          fts = tf.expand_dims(self._fts, 2) # (None, dim_time, 1, sum(dim_fts))
-          ft_embeddings = tf.nn.conv2d(fts, self.fc_W, [1, 1, 1, 1], 'VALID') # (None, dim_time, 1, dim_output)
-          ft_embeddings = tf.reshape(ft_embeddings, 
-            [-1, self._config.dim_time, self._config.dim_output])
-          self._feature_op = ft_embeddings + self.fc_B
+        fts = tf.expand_dims(self._fts, 2) # (None, dim_time, 1, sum(dim_fts))
+        ft_embeddings = tf.nn.conv2d(fts, self.fc_W, [1, 1, 1, 1], 'VALID') # (None, dim_time, 1, dim_output)
+        ft_embeddings = tf.reshape(ft_embeddings, 
+          [-1, self._config.dim_time, self._config.dim_output])
+        self._feature_op = ft_embeddings + self.fc_B
 
   def build_inference_graph_in_trn_tst(self, basegraph):
     self.build_inference_graph_in_tst(basegraph)
