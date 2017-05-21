@@ -69,7 +69,8 @@ class Decoder(base.DecoderBase):
                 input_keep_prob=0.5, 
                 state_keep_prob=0.5, 
                 variational_recurrent=True, 
-                input_size=self.config.dim_input)
+                input_size=self.config.dim_input,
+                dtype=tf.float32)
             )
           else:
             cells.append(tf.contrib.rnn.DropoutWrapper(cell, input_keep_prob=0.5))
@@ -80,7 +81,8 @@ class Decoder(base.DecoderBase):
                 output_keep_prob=0.5,
                 state_keep_prob=0.5, 
                 variational_recurrent=True, 
-                input_size=self.config.dim_input)
+                input_size=self.config.dim_input,
+                dtype=tf.float32)
           )
         else:
           cells.append(
@@ -189,7 +191,8 @@ class DecoderHiddenSet(base.DecoderBase):
                 input_keep_prob=0.5, 
                 state_keep_prob=0.5, 
                 variational_recurrent=True, 
-                input_size=self.config.dim_input)
+                input_size=self.config.dim_input, 
+                dtype=tf.float32)
             )
           else:
             cells.append(tf.contrib.rnn.DropoutWrapper(cell, input_keep_prob=0.5))
@@ -200,7 +203,8 @@ class DecoderHiddenSet(base.DecoderBase):
                 output_keep_prob=0.5,
                 state_keep_prob=0.5, 
                 variational_recurrent=True, 
-                input_size=self.config.dim_input)
+                input_size=self.config.dim_input, 
+                dtype=tf.float32)
           )
         else:
           cells.append(
