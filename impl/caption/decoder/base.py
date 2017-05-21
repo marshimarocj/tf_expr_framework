@@ -18,7 +18,7 @@ class ConfigBase(framework.model.proto.ProtoConfig):
     self.sent_pool_size = 5
 
     self.tied_embed = False
-    self.variantional_recurrent = False
+    self.variational_recurrent = False
 
     self.reg_type = None
     self.reg_lambda = 0.

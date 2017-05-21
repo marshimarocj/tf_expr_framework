@@ -63,7 +63,7 @@ class Decoder(base.DecoderBase):
       with tf.variable_scope(self.name_scope) as scope:
         cells = []
         for cell in self._cells[:-1]:
-          if self.config.variantional_recurrent:
+          if self.config.variational_recurrent:
             cells.append(
               tf.contrib.rnn.DropoutWrapper(cell, 
                 input_keep_prob=0.5, 
@@ -73,7 +73,7 @@ class Decoder(base.DecoderBase):
             )
           else:
             cells.append(tf.contrib.rnn.DropoutWrapper(cell, input_keep_prob=0.5))
-        if self.config.variantional_recurrent:
+        if self.config.variational_recurrent:
           cells.append(
             tf.contrib.rnn.DropoutWrapper(self._cells[-1], 
                 input_keep_prob=0.5,
