@@ -152,7 +152,7 @@ class AttentionFtEncoder(Encoder):
     if sum(self._config.dim_fts) != self._config.dim_output or self._config.dummy:
       with basegraph.as_default():
         with tf.variable_scope(self.name_scope):
-          if not self._config.dummy:
+          if self._config.dummy:
             scale = 1.0 / (sum(self._config.dim_fts) ** 0.5)
             self.fc_W = tf.get_variable('fc_W', 
               shape=(1, 1, sum(self._config.dim_fts), self._config.dim_output), dtype=tf.float32,
