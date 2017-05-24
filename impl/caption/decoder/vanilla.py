@@ -89,18 +89,6 @@ class Decoder(base.DecoderBase):
             tf.contrib.rnn.DropoutWrapper(self._cells[-1], 
               input_keep_prob=0.5, output_keep_prob=0.5)
           )
-        # for cell in self._cells:
-        #   if self.config.variational_recurrent:
-        #     cells.append(
-        #       tf.contrib.rnn.DropoutWrapper(cell, 
-        #         output_keep_prob=0.5, 
-        #         state_keep_prob=0.5, 
-        #         variational_recurrent=True, 
-        #         input_size=self.config.dim_input, 
-        #         dtype=tf.float32)
-        #     )
-        #   else:
-        #     cells.append(tf.contrib.rnn.DropoutWrapper(cell, output_keep_prob=0.5))
         cell = tf.contrib.rnn.MultiRNNCell(cells, state_is_tuple=True)
 
         self._trn_ft_state = self._ft_step(cell, scope, False)
@@ -223,18 +211,6 @@ class DecoderHiddenSet(base.DecoderBase):
             tf.contrib.rnn.DropoutWrapper(self._cells[-1], 
               input_keep_prob=0.5, output_keep_prob=0.5)
           )
-        # for cell in self._cells:
-        #   if self.config.variational_recurrent:
-        #     cells.append(
-        #       tf.contrib.rnn.DropoutWrapper(cell, 
-        #         output_keep_prob=0.5, 
-        #         state_keep_prob=0.5, 
-        #         variational_recurrent=True, 
-        #         input_size=self.config.dim_input, 
-        #         dtype=tf.float32)
-        #     )
-        #   else:
-        #     cells.append(tf.contrib.rnn.DropoutWrapper(cell, output_keep_prob=0.5))
         cell = tf.contrib.rnn.MultiRNNCell(cells, state_is_tuple=True)
 
         self._trn_ft_state = self._ft_step(cell, scope, None)
