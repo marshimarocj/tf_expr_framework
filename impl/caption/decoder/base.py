@@ -23,7 +23,7 @@ class ConfigBase(framework.model.proto.ProtoConfig):
     self.reg_type = None
     self.reg_lambda = 0.
 
-    self.cell_type = 'lstm' # lstm|gru
+    self.cell_type = '' # lstm|gru
     self.num_layer = 1
 
 
