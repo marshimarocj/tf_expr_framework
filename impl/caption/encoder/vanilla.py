@@ -80,6 +80,8 @@ class Encoder(framework.model.proto.ModelProto):
         if sum(self._config.dim_fts) != self._config.dim_output or self._config.dummy:
           # self._feature_op = tf.nn.xw_plus_b(self._fts, self.fc_W, self.fc_B)
           self._tst_feature_op = tf.nn.xw_plus_b(self._fts, self.fc_W, self.fc_B)
+        else:
+          self._tst_feature_op = self._fts
 
   def build_inference_graph_in_trn_tst(self, basegraph):
     with basegraph.as_default():
@@ -88,7 +90,10 @@ class Encoder(framework.model.proto.ModelProto):
           fts = tf.nn.dropout(self._fts, 0.5)
         else:
           fts = self._fts
-        self._trn_feature_op = tf.nn.xw_plus_b(fts, self.fc_W, self.fc_B)
+        if sum(self._config.dim_fts) != self._config.dim_output or self._config.dummy:
+          self._trn_feature_op = tf.nn.xw_plus_b(fts, self.fc_W, self.fc_B)
+        else:
+          self._trn_feature_op = fts
     self.build_inference_graph_in_tst(basegraph)
 
   def add_reg(self, basegraph):
@@ -146,7 +151,8 @@ class AttentionFtEncoder(Encoder):
     # input
     self._fts = tf.no_op()
     # output
-    self._feature_op = tf.no_op()
+    self._trn_feature_op = tf.no_op()
+    self._tst_feature_op = tf.no_op()
     # trn only
     self._regularize_op = tf.no_op()
 
@@ -159,8 +165,12 @@ class AttentionFtEncoder(Encoder):
     self._fts = val 
 
   @property
-  def feature_op(self):
-    return self._feature_op
+  def trn_feature_op(self):
+    return self._trn_feature_op
+
+  @property
+  def tst_feature_op(self):
+    return self._tst_feature_op
 
   def build_parameter_graph(self, basegraph):
     if sum(self._config.dim_fts) != self._config.dim_output or self._config.dummy:
@@ -175,18 +185,37 @@ class AttentionFtEncoder(Encoder):
               shape=(self._config.dim_output,), dtype=tf.float32,
               initializer=tf.random_uniform_initializer(-0.1, 0.1))
 
+  def _feature_encode(self, fts):
+    fts = tf.expand_dims(fts, 2) # (None, dim_time, 1, sum(dim_fts))
+    ft_embeddings = tf.nn.conv2d(fts, self.fc_W, [1, 1, 1, 1], 'VALID') # (None, dim_time, 1, dim_output)
+    ft_embeddings = tf.reshape(ft_embeddings, 
+      [-1, self._config.dim_time, self._config.dim_output])
+    feature_op = ft_embeddings + self.fc_B
+
+    return feature_op
+
   def build_inference_graph_in_tst(self, basegraph):
     with basegraph.as_default():
       with tf.variable_scope(self.name_scope):
-        if sum(self._config.dim_fts) != self._config.dim_output or self._config.dummy:
-          fts = tf.expand_dims(self._fts, 2) # (None, dim_time, 1, sum(dim_fts))
-          ft_embeddings = tf.nn.conv2d(fts, self.fc_W, [1, 1, 1, 1], 'VALID') # (None, dim_time, 1, dim_output)
-          ft_embeddings = tf.reshape(ft_embeddings, 
-            [-1, self._config.dim_time, self._config.dim_output])
-          self._feature_op = ft_embeddings + self.fc_B
+        if sum(self._config.dim_fts) == self._config.dim_output and not self._config.dummy:
+          self._tst_feature_op = self._fts
+        else:
+          self._tst_feature_op = self._feature_encode(self._fts)
 
   def build_inference_graph_in_trn_tst(self, basegraph):
-    self.build_inference_graph_in_tst(basegraph)
+    with basegraph.as_default():
+      with tf.variable_scope(self.name_scope):
+        if self._config.dropin:
+          fts = tf.nn.dropout(self._fts, 0.5)
+        else:
+          fts = self._fts
+
+        if sum(self._config.dim_fts) == self._config.dim_output and not self._config.dummy:
+          self._trn_feature_op = fts
+          self._tst_feature_op = self._fts
+        else:
+          self._trn_feature_op = self._feature_encode(fts)
+          self._tst_feature_op = self._feature_encode(self._fts)
 
   def add_reg(self):
     pass

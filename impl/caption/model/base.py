@@ -89,7 +89,6 @@ class EncoderDecoderBase(framework.model.proto.ModelCombiner):
     decoder = self.model_protos[1]
 
     encoder.build_inference_graph_in_tst(basegraph)
-    # decoder.ft_embeds = encoder.feature_op
     decoder.tst_ft_embeds = encoder.tst_feature_op
     decoder.build_inference_graph_in_tst(basegraph)
 
@@ -98,7 +97,6 @@ class EncoderDecoderBase(framework.model.proto.ModelCombiner):
     decoder = self.model_protos[1]
 
     encoder.build_inference_graph_in_trn_tst(basegraph)
-    # decoder.ft_embeds = encoder.feature_op
     decoder.trn_ft_embeds = encoder.trn_feature_op
     decoder.tst_ft_embeds = encoder.tst_feature_op
     decoder.build_inference_graph_in_trn_tst(basegraph)
