@@ -261,7 +261,6 @@ class FullModel(object):
           learning_rate = tf.train.piecewise_constant(
             global_step, decay_boundarys, self.config.decay_values)
 
-        print self.config.optimizer_alg
         if self.config.optimizer_alg == 'Adam':
           optimizer = tf.train.AdamOptimizer(learning_rate)
         elif self.config.optimizer_alg == 'SGD':
@@ -393,6 +392,8 @@ class ModelCombiner(FullModel):
               optimizer = tf.train.AdamOptimizer(learning_rate)
             elif self.config.optimizer_alg == 'SGD':
               optimizer = tf.train.GradientDescentOptimizer(learning_rate)
+            elif self.config.optimizer_alg == 'RMSProp':
+              optimizer = tf.train.RMSPropOptimizer(learning_rate)
 
             weight = tf.get_collection(
               tf.GraphKeys.TRAINABLE_VARIABLES, model_proto.name_scope)
