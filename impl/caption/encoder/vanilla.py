@@ -71,14 +71,14 @@ class Encoder(framework.model.proto.ModelProto):
   def build_inference_graph_in_tst(self, basegraph):
     with basegraph.as_default():
       with tf.variable_scope(self.name_scope):
-        if self._config.dropin:
-          self._feature_op = tf.nn.dropout(self._fts, 0.5)
-        else:
-          self._feature_op = self._fts
         if sum(self._config.dim_fts) != self._config.dim_output or self._config.dummy:
-          self._feature_op = tf.nn.xw_plus_b(self._feature_op, self.fc_W, self.fc_B)
+          self._feature_op = tf.nn.xw_plus_b(self._fts, self.fc_W, self.fc_B)
 
   def build_inference_graph_in_trn_tst(self, basegraph):
+    with basegraph.as_default():
+      with tf.variable_scope(self.name_scope):
+        if self._config.dropin:
+          self._fts = tf.nn.dropout(self._fts, 0.5)
     self.build_inference_graph_in_tst(basegraph)
 
   def add_reg(self, basegraph):
