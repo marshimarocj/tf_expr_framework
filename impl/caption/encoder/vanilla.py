@@ -9,6 +9,7 @@ class Config(framework.model.proto.ProtoConfig):
   def __init__(self):
     self.dim_fts = [0, 0, 0, 0] # c3d, mfccbox, mfccfv, category
     self.dim_output = 512 # dim of feature layer output
+    self.dropin = False
 
     self.reg_type = 'l1l2' # l1l2|l2|None
     self.reg_lambda = 0.
@@ -70,10 +71,12 @@ class Encoder(framework.model.proto.ModelProto):
   def build_inference_graph_in_tst(self, basegraph):
     with basegraph.as_default():
       with tf.variable_scope(self.name_scope):
-        if sum(self._config.dim_fts) == self._config.dim_output and not self._config.dummy:
-          self._feature_op = tf.identity(self._fts) # not an efficient implementation, just to make the interface consistent
+        if self._config.dropin:
+          self._feature_op = tf.nn.dropout(self._fts, 0.5)
         else:
-          self._feature_op = tf.nn.xw_plus_b(self._fts, self.fc_W, self.fc_B)
+          self._feature_op = self._fts
+        if sum(self._config.dim_fts) != self._config.dim_output or self._config.dummy:
+          self._feature_op = tf.nn.xw_plus_b(self._feature_op, self.fc_W, self.fc_B)
 
   def build_inference_graph_in_trn_tst(self, basegraph):
     self.build_inference_graph_in_tst(basegraph)
@@ -109,6 +112,7 @@ class AttentionFtConfig(framework.model.proto.ProtoConfig):
     self.dim_fts = []
     self.dim_time = 0
     self.dim_output = 512
+    self.dropin = False
 
     self.reg_type = None # l1l2|l2|None
     self.reg_lambda = 0.
@@ -164,10 +168,12 @@ class AttentionFtEncoder(Encoder):
   def build_inference_graph_in_tst(self, basegraph):
     with basegraph.as_default():
       with tf.variable_scope(self.name_scope):
-        if sum(self._config.dim_fts) == self._config.dim_output and not self._config.dummy:
-          self._feature_op = self._fts
+        if self._config.dropin:
+          self._feature_op = tf.nn.dropout(self._fts, 0.5)
         else:
-          fts = tf.expand_dims(self._fts, 2) # (None, dim_time, 1, sum(dim_fts))
+          self._feature_op = self._fts
+        if sum(self._config.dim_fts) != self._config.dim_output or self._config.dummy:
+          fts = tf.expand_dims(self._feature_op, 2) # (None, dim_time, 1, sum(dim_fts))
           ft_embeddings = tf.nn.conv2d(fts, self.fc_W, [1, 1, 1, 1], 'VALID') # (None, dim_time, 1, dim_output)
           ft_embeddings = tf.reshape(ft_embeddings, 
             [-1, self._config.dim_time, self._config.dim_output])
