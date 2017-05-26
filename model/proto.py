@@ -261,6 +261,7 @@ class FullModel(object):
           learning_rate = tf.train.piecewise_constant(
             global_step, decay_boundarys, self.config.decay_values)
 
+        print self.config.optimizer_alg
         if self.config.optimizer_alg == 'Adam':
           optimizer = tf.train.AdamOptimizer(learning_rate)
         elif self.config.optimizer_alg == 'SGD':
