@@ -78,6 +78,7 @@ class DecoderBase(framework.model.proto.ModelProto):
   def trn_ft_embeds(self, val):
     self._trn_ft_embeds = val
 
+  @property
   def tst_ft_embeds(self):
     if self._tst_ft_embeds is tf.Operation:
       raise NotImplementedError("""please implement decoder.base.DecoderBase._tst_ft_embeds""")
