@@ -52,7 +52,7 @@ class Decoder(base.DecoderBase):
     with basegraph.as_default():
       with tf.variable_scope(self.name_scope) as scope:
         cell = tf.contrib.rnn.MultiRNNCell(self._cells, state_is_tuple=True)
-        self._tst_ft_state = self._ft_step(cell, scope, False)
+        self._tst_ft_state = self._ft_step(cell, self.tst_ft_embeds, scope, False)
         if self.config.greedy_or_beam:
           self._greedy_word_steps(cell, scope)
         else:
@@ -91,18 +91,18 @@ class Decoder(base.DecoderBase):
           )
         cell = tf.contrib.rnn.MultiRNNCell(cells, state_is_tuple=True)
 
-        self._trn_ft_state = self._ft_step(cell, scope, False)
+        self._trn_ft_state = self._ft_step(cell, self.trn_ft_embeds, scope, False)
         self._word_steps(cell, scope)
 
         cell = tf.contrib.rnn.MultiRNNCell(self._cells, state_is_tuple=True)
-        self._tst_ft_state = self._ft_step(cell, scope, True)
+        self._tst_ft_state = self._ft_step(cell, self.tst_ft_embeds, scope, True)
         self._greedy_word_steps(cell, scope)
 
-  def _ft_step(self, cell, scope, reuse):
+  def _ft_step(self, cell, ft_embeds, scope, reuse):
     if reuse:
       scope.reuse_variables()
 
-    _, state = cell(self._ft_embeds, self._init_state) # ft step output is ignored
+    _, state = cell(ft_embeds, self._init_state) # ft step output is ignored
 
     return state # (batch_size, state_size)
 
@@ -174,7 +174,7 @@ class DecoderHiddenSet(base.DecoderBase):
     with basegraph.as_default():
       with tf.variable_scope(self.name_scope) as scope:
         cell = tf.contrib.rnn.MultiRNNCell(self._cells, state_is_tuple=True)
-        self._tst_ft_state = self._ft_step(cell, scope, None)
+        self._tst_ft_state = self._ft_step(cell, self.tst_ft_embeds, scope, None)
         if self.config.greedy_or_beam:
           self._greedy_word_steps(cell, scope, False)
         else:
@@ -213,16 +213,16 @@ class DecoderHiddenSet(base.DecoderBase):
           )
         cell = tf.contrib.rnn.MultiRNNCell(cells, state_is_tuple=True)
 
-        self._trn_ft_state = self._ft_step(cell, scope, None)
+        self._trn_ft_state = self._ft_step(cell, self.trn_ft_embeds, scope, None)
         self._word_steps(cell, scope)
 
         cell = tf.contrib.rnn.MultiRNNCell(self._cells, state_is_tuple=True)
-        self._tst_ft_state = self._ft_step(cell, scope, None)
+        self._tst_ft_state = self._ft_step(cell, self.tst_ft_embeds, scope, None)
         self._greedy_word_steps(cell, scope, True)
 
-  def _ft_step(self, cell, scope, reuse):
+  def _ft_step(self, cell, ft_embeds, scope, reuse):
     state_size = cell.state_size
-    states = [self._ft_embeds for _ in nest.flatten(state_size)]
+    states = [ft_embeds for _ in nest.flatten(state_size)]
     states = nest.pack_sequence_as(state_size, states)
 
     return states

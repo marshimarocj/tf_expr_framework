@@ -48,7 +48,9 @@ class DecoderBase(framework.model.proto.ModelProto):
       ]
 
     # input
-    self._ft_embeds = tf.no_op()
+    # self._ft_embeds = tf.no_op()
+    self._trn_ft_embeds = tf.no_op()
+    self._tst_ft_embeds = tf.no_op()
     # trn only
     self._captionids = tf.no_op()
     self._caption_masks = tf.no_op()
@@ -67,14 +69,23 @@ class DecoderBase(framework.model.proto.ModelProto):
 
   ###############input###############
   @property
-  def ft_embeds(self):
-    if self._ft_embeds is tf.Operation:
-      raise NotImplementedError("""please implement decoder.base.DecoderBase._ft_embeds""")
-    return self._ft_embeds
+  def trn_ft_embeds(self):
+    if self._trn_ft_embeds is tf.Operation:
+      raise NotImplementedError("""please implement decoder.base.DecoderBase._trn_ft_embeds""")
+    return self._trn_ft_embeds
 
-  @ft_embeds.setter
-  def ft_embeds(self, val):
-    self._ft_embeds = val
+  @trn_ft_embeds.setter
+  def trn_ft_embeds(self, val):
+    self._trn_ft_embeds = val
+
+  def tst_ft_embeds(self):
+    if self._tst_ft_embeds is tf.Operation:
+      raise NotImplementedError("""please implement decoder.base.DecoderBase._tst_ft_embeds""")
+    return self._tst_ft_embeds
+
+  @tst_ft_embeds.setter
+  def tst_ft_embeds(self, val):
+    self._tst_ft_embeds = val
 
   # trn
   @property
