@@ -265,7 +265,7 @@ class FullModel(object):
           optimizer = tf.train.AdamOptimizer(learning_rate)
         elif self.config.optimizer_alg == 'SGD':
           optimizer = tf.train.GradientDescentOptimizer(learning_rate)
-        elif self.config.ooptimizer_alg == 'RMSProp':
+        elif self.config.optimizer_alg == 'RMSProp':
           optimizer = tf.train.RMSPropOptimizer(learning_rate)
         self._gradient_op = optimizer.compute_gradients(self._loss_op)
         self._train_op = optimizer.apply_gradients(self._gradient_op, global_step=global_step)
