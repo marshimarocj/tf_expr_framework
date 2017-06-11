@@ -280,7 +280,7 @@ def predict_in_tst(trntst, sess, tst_reader, predict_file):
       wordids, cum_logits, pres, ends = sess.run(
         [
           op_dict['decoder.output_ops'], 
-          op_dict['decoder.beam_cum_logit_ops'], 
+          op_dict['decoder.beam_cum_log_prob_ops'], 
           op_dict['decoder.beam_pre_ops'],
           op_dict['decoder.beam_end_ops']
         ], feed_dict=feed_dict)
