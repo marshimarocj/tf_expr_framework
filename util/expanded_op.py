@@ -96,7 +96,7 @@ def beam_decode(next_step_func,
 
   output_ops = []
   beam_pre_ops = []
-  beam_cum_logit_ops = []
+  beam_cum_log_prob_ops = []
   beam_end_ops = []
 
   wordids = init_input # (batch_size,)
@@ -107,23 +107,19 @@ def beam_decode(next_step_func,
       scope.reuse_variables()
 
     # (batch_size,) in step 0 and (batch_size*k,) in other steps
-    # input = tf.nn.embedding_lookup(self.word_embedding_W, wordids) 
-    # outputs, states = cell(input, states)
-    # logit = tf.nn.xw_plus_b(outputs, self.softmax_W, self.softmax_B)
-    # logit = tf.nn.log_softmax(logit)
-    logit, states, outputs = next_step_func(wordids, states, outputs, i)
+    log_prob, states, outputs = next_step_func(wordids, states, outputs, i)
 
     if i == 0:
-      logit_topk, word_topk = tf.nn.top_k(logit, k) # (batch_size, k)
+      log_prob_topk, word_topk = tf.nn.top_k(log_prob, k) # (batch_size, k)
       output_ops.append(word_topk)
       pre = -tf.ones((batch_size, k), dtype=tf.int32)
       beam_pre_ops.append(pre)
 
       # set cumulated probability of completed sentences to -inf
       is_end = tf.equal(word_topk, tf.ones_like(word_topk, dtype=tf.int32))
-      logit_topk = tf.where(is_end, -100000000*tf.ones_like(logit_topk), logit_topk) 
+      log_prob_topk = tf.where(is_end, -100000000*tf.ones_like(log_prob_topk), log_prob_topk) 
       end_idx = tf.where(is_end)
-      beam_cum_logit_ops.append(logit_topk)
+      beam_cum_log_prob_ops.append(log_prob_topk)
       beam_end_ops.append(end_idx)
 
       wordids = flatten(word_topk) # (batch_size*k,)
@@ -139,11 +135,11 @@ def beam_decode(next_step_func,
         outputs = tf.reshape(tf.tile(outputs, [1, k]), (-1, tf.shape(outputs)[1]))
     else:
       # first select top k*k; then select top k
-      logit += tf.reshape(beam_cum_logit_ops[-1], (-1, 1))
-      logit_topk2, word_topk2 = tf.nn.top_k(logit, k) # (batch_size*k, k)
-      logit_topk2 = tf.reshape(logit_topk2, (-1, k*k)) # (batch_size, k*k)
+      log_prob += tf.reshape(beam_cum_log_prob_ops[-1], (-1, 1))
+      log_prob_topk2, word_topk2 = tf.nn.top_k(log_prob, k) # (batch_size*k, k)
+      log_prob_topk2 = tf.reshape(log_prob_topk2, (-1, k*k)) # (batch_size, k*k)
       word_topk2 = tf.reshape(word_topk2, (-1, k*k)) # (batch_size, k*k)
-      logit_topk, idx_topk = tf.nn.top_k(logit_topk2, k) # (batch_size, k)
+      log_prob_topk, idx_topk = tf.nn.top_k(log_prob_topk2, k) # (batch_size, k)
 
       pre = idx_topk//k # (batch_size, k)
       beam_pre_ops.append(pre)
@@ -156,9 +152,9 @@ def beam_decode(next_step_func,
 
       # set cumulated probability of completed sentences to -inf
       is_end = tf.equal(word_topk, tf.ones_like(word_topk, dtype=tf.int32))
-      logit_topk = tf.where(is_end, -100000000*tf.ones_like(logit_topk), logit_topk) 
+      log_prob_topk = tf.where(is_end, -100000000*tf.ones_like(log_prob_topk), log_prob_topk) 
       end_idx = tf.where(is_end)
-      beam_cum_logit_ops.append(logit_topk)
+      beam_cum_log_prob_ops.append(log_prob_topk)
       beam_end_ops.append(end_idx)
 
       wordids = flatten(word_topk) # (batch_size*k,)
@@ -175,4 +171,4 @@ def beam_decode(next_step_func,
         _states.append(state)
       states = nest.pack_sequence_as(state_struct, _states)
 
-  return output_ops, beam_pre_ops, beam_cum_logit_ops, beam_end_ops
+  return output_ops, beam_pre_ops, beam_cum_log_prob_ops, beam_end_ops

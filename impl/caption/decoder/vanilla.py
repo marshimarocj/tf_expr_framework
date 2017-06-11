@@ -142,7 +142,7 @@ class Decoder(base.DecoderBase):
       reuse_only_after_first_step=False)
     self._output_ops = op_groups[0]
     self._beam_pre_ops = op_groups[1]
-    self._beam_cum_logit_ops = op_groups[2]
+    self._beam_cum_log_prob_ops = op_groups[2]
     self._beam_end_ops = op_groups[3]
 
 
@@ -266,7 +266,7 @@ class DecoderHiddenSet(base.DecoderBase):
       reuse_only_after_first_step=True)
     self._output_ops = op_groups[0]
     self._beam_pre_ops = op_groups[1]
-    self._beam_cum_logit_ops = op_groups[2]
+    self._beam_cum_log_prob_ops = op_groups[2]
     self._beam_end_ops = op_groups[3]
 
 
@@ -275,7 +275,7 @@ def next_step_func_handle(model, cell):
     input = tf.nn.embedding_lookup(model.word_embedding_W, wordids) 
     outputs, states = cell(input, states)
     logit = tf.nn.xw_plus_b(outputs, model.softmax_W, model.softmax_B)
-    logit = tf.nn.log_softmax(logit)
-    return logit, states, None
+    log_prob = tf.nn.log_softmax(logit)
+    return log_prob, states, None
 
   return next_step_func
