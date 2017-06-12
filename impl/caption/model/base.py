@@ -124,7 +124,7 @@ class EncoderDecoderBase(framework.model.proto.ModelCombiner):
       return {
         'decoder.tst_ft_state_op': decoder.tst_ft_state,
         'decoder.output_ops': decoder.output_ops,
-        'decoder.beam_cum_logit_ops': decoder.beam_cum_logit_ops,
+        'decoder.beam_cum_log_prob_ops': decoder.beam_cum_log_prob_ops,
         'decoder.beam_pre_ops': decoder.beam_pre_ops,
         'decoder.beam_end_ops': decoder.beam_end_ops,
       }
