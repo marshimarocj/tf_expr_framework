@@ -172,9 +172,10 @@ def beam_decode(next_step_func,
         _states.append(state)
       states = nest.pack_sequence_as(state_struct, _states)
 
-      col_pre = tf.reshape(pre, (-1, 1))
-      row_pre = row_idx
-      idx = tf.concat([row_pre, col_pre], 1)
-      outputs = tf.gather_nd(outputs, idx)
+      if outputs is not None:
+        col_pre = tf.reshape(pre, (-1, 1))
+        row_pre = row_idx
+        idx = tf.concat([row_pre, col_pre], 1)
+        outputs = tf.gather_nd(outputs, idx)
 
   return output_ops, beam_pre_ops, beam_cum_log_prob_ops, beam_end_ops
