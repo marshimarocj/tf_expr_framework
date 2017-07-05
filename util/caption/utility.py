@@ -320,7 +320,7 @@ def sample_top_word_decode(sess, states, wordids,
 
 
 # pool_size <= beam_width
-def beamsearch_recover_captions(wordids, cum_logits, pres, ends, pool_size):
+def beamsearch_recover_captions(wordids, cum_log_probs, pres, ends, pool_size):
   batch_size = wordids[0].shape[0]
   beam_width = wordids[0].shape[1]
   num_step = len(wordids)
@@ -333,15 +333,13 @@ def beamsearch_recover_captions(wordids, cum_logits, pres, ends, pool_size):
       k = end[1]
       pre = pres[n][b, k]
       caption = []
-      logit = 0
+      log_prob = cum_log_probs[n][b, k] / (n+1)
       for t in xrange(n-1, -1, -1):
-        if t == n-1:
-          logit = cum_logits[t][b, pre] / n
         caption.append(wordids[t][b, pre])
         pre = pres[t][b, pre]
       caption = np.array(caption, np.int32)[::-1]
-      if len(sent_pool[b]) <  pool_size:
-        sent_pool[b].append((logit, caption))
+      if len(sent_pool[b]) < pool_size:
+        sent_pool[b].append((log_prob, caption))
 
   # in case there's not enough automatically ending candiates
   _ends = ends[n]
@@ -361,13 +359,13 @@ def beamsearch_recover_captions(wordids, cum_logits, pres, ends, pool_size):
         continue
       pre = pres[n][b, k]
       caption = []
-      logit = cum_logits[n][b, k]/(n+1)
+      log_prob = cum_log_probs[n][b, k]/(n+1)
       pre = k
       for t in xrange(n, -1, -1):
         caption.append(wordids[t][b, pre])
         pre = pres[t][b, pre]
       caption = np.array(caption, np.int32)[::-1]
-      sent_pool[b].append((logit, caption))
+      sent_pool[b].append((log_prob, caption))
 
   out = []
   for b, sents in enumerate(sent_pool):

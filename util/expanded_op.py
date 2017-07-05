@@ -117,10 +117,10 @@ def beam_decode(next_step_func,
 
       # set cumulated probability of completed sentences to -inf
       is_end = tf.equal(word_topk, tf.ones_like(word_topk, dtype=tf.int32))
-      log_prob_topk = tf.where(is_end, -100000000*tf.ones_like(log_prob_topk), log_prob_topk) 
       end_idx = tf.where(is_end)
       beam_cum_log_prob_ops.append(log_prob_topk)
       beam_end_ops.append(end_idx)
+      log_prob_topk = tf.where(is_end, -100000000*tf.ones_like(log_prob_topk), log_prob_topk) 
 
       wordids = flatten(word_topk) # (batch_size*k,)
 
@@ -135,7 +135,8 @@ def beam_decode(next_step_func,
         outputs = tf.reshape(tf.tile(outputs, [1, k]), (-1, tf.shape(outputs)[1]))
     else:
       # first select top k*k; then select top k
-      log_prob += tf.reshape(beam_cum_log_prob_ops[-1], (-1, 1))
+      # log_prob += tf.reshape(beam_cum_log_prob_ops[-1], (-1, 1))
+      log_prob += tf.reshape(log_prob_topk, (-1, 1))
       log_prob_topk2, word_topk2 = tf.nn.top_k(log_prob, k) # (batch_size*k, k)
       log_prob_topk2 = tf.reshape(log_prob_topk2, (-1, k*k)) # (batch_size, k*k)
       word_topk2 = tf.reshape(word_topk2, (-1, k*k)) # (batch_size, k*k)
@@ -152,14 +153,14 @@ def beam_decode(next_step_func,
 
       # set cumulated probability of completed sentences to -inf
       is_end = tf.equal(word_topk, tf.ones_like(word_topk, dtype=tf.int32))
-      log_prob_topk = tf.where(is_end, -100000000*tf.ones_like(log_prob_topk), log_prob_topk) 
       end_idx = tf.where(is_end)
       beam_cum_log_prob_ops.append(log_prob_topk)
       beam_end_ops.append(end_idx)
+      log_prob_topk = tf.where(is_end, -100000000*tf.ones_like(log_prob_topk), log_prob_topk) 
 
       wordids = flatten(word_topk) # (batch_size*k,)
 
-      # rearrange state indexs based on selection
+      # rearrange state and outputs indexs based on selection
       states = nest.flatten(states)
       _states = []
       for state, state_size in zip(states, state_sizes):
@@ -170,5 +171,10 @@ def beam_decode(next_step_func,
         state = tf.gather_nd(state, idx)
         _states.append(state)
       states = nest.pack_sequence_as(state_struct, _states)
+
+      col_pre = tf.reshape(pre, (-1, 1))
+      row_pre = row_idx
+      idx = tf.concat([row_pre, col_pre], 1)
+      outputs = tf.gather_nd(outputs, idx)
 
   return output_ops, beam_pre_ops, beam_cum_log_prob_ops, beam_end_ops
