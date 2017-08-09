@@ -7,3 +7,6 @@ class Reader(object):
 
   def yield_tst_batch(self, batch_size):
     raise NotImplementedError("""please customize yield_tst_batch""")
+
+  def reset(self):
+    pass
