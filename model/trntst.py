@@ -180,7 +180,7 @@ class TrnTst(object):
       for key in metrics:
         self._logger.info('%s:%.4f', key, metrics[key])
 
-      metric_history = []
+      # metric_history = []
       step = 0
       for epoch in xrange(self.model_cfg.num_epoch):
         step = self._iterate_epoch(
@@ -193,9 +193,12 @@ class TrnTst(object):
         self._logger.info('epoch (%d/%d)', epoch, self.model_cfg.num_epoch)
         for key in metrics:
           self._logger.info('%s:%.4f', key, metrics[key])
+        val_log_file = os.path.join(self.path_cfg.log_dir, 'val_metrics.%d.json'%epoch)
+        with open(val_log_file) as fout:
+          json.dump(metrics, fout, indent=2)
 
-      val_metric_file = self.path_cfg.val_metric_file
-      cPickle.dump(metric_history, open(val_metric_file, 'w'))
+      # val_metric_file = self.path_cfg.val_metric_file
+      # cPickle.dump(metric_history, open(val_metric_file, 'w'))
 
   def test(self, tst_reader, memory_fraction=1.0):
     tst_graph = self.model.build_tst_graph()
