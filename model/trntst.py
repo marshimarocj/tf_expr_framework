@@ -182,12 +182,12 @@ class TrnTst(object):
 
       # metric_history = []
       step = 0
-      for epoch in xrange(self.model_cfg.num_epoch):
+      for epoch in xrange(base_epoch, self.model_cfg.num_epoch):
         step = self._iterate_epoch(
           sess, trn_reader, tst_reader, summarywriter, step, total_step, base_epoch + epoch)
 
         metrics = self._validation(sess, tst_reader)
-        metrics['epoch'] = base_epoch + epoch
+        metrics['epoch'] = epoch
         # metric_history.append(metrics)
 
         self._logger.info('epoch (%d/%d)', epoch, self.model_cfg.num_epoch)
