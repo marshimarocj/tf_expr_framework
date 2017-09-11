@@ -18,7 +18,7 @@ class PathCfg(object):
     self.model_dir = ''
 
     self.log_file = ''
-    self.val_metric_file = ''
+    # self.val_metric_file = ''
     self.model_file = ''
     self.predict_file = ''
 
@@ -188,7 +188,7 @@ class TrnTst(object):
 
         metrics = self._validation(sess, tst_reader)
         metrics['epoch'] = base_epoch + epoch
-        metric_history.append(metrics)
+        # metric_history.append(metrics)
 
         self._logger.info('epoch (%d/%d)', epoch, self.model_cfg.num_epoch)
         for key in metrics:
