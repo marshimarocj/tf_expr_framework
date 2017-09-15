@@ -13,7 +13,7 @@ def int64_feature(value):
   return tf.train.Feature(int64_list=tf.train.Int64List(value=value))
 
 
-def meta_record(num):
+def meta_record(num_record):
   meta = tf.train.Example(features=tf.train.Features(feature={
     'num_record': int64_feature(num_record),
   }))
