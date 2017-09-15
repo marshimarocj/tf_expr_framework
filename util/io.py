@@ -17,6 +17,7 @@ def meta_record(num_record):
   meta = tf.train.Example(features=tf.train.Features(feature={
     'num_record': int64_feature([num_record]),
   }))
+  return meta
 
 
 class RandomShuffleQueue(object):
