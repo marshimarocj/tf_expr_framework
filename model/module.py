@@ -15,6 +15,7 @@ class ModuleConfig(object):
   [subconfigs] a dictionary of configs belong to the submodules in this module
   [freeze] boolean, whether to freeze the weights in this module in training. N.B. it doesn't affect the training of submodules
   [lr_mult] float, the multiplier to the base learning rate for weights in this modules. N.B. it doesn't affect the traninig of submodules
+  [opt_alg] string, 'Adam|SGD|RMSProp', optimizer
   """
   def __init__(self):
     self.subconfigs = {}
@@ -34,7 +35,9 @@ class ModuleConfig(object):
 
 class AbstractModule(object):
   """
-  a module only contains the inference graph
+  a module only contains the weight to share
+  and provides the function to construct the inference graph
+  N.B. it doesn't construct the inference graph, it only provides the function to do so
   it doesn't contain loss and the gradient
   in addition to the customized members, it contains three special members:
   [config] the config of this module
@@ -47,6 +50,8 @@ class AbstractModule(object):
     self._config = config
     self._submodules = {}
     self._op2monitor = {}
+    self._input_keys = []
+    self._output_keys = []
 
   @property
   def config(self):
@@ -82,8 +87,14 @@ class AbstractModule(object):
 
 class ModelConfig(object):
   def __init__(self):
-    self.base_lr = 1e-4
     self.module_config = ModuleConfig()
+
+    self.trn_batch_size = 256
+    self.tst_batch_size = 128
+    self.num_epoch = 100
+    self.val_iter = 100
+    self.monitor_iter = 1
+    self.base_lr = 1e-4
 
   def load(self, file):
     with open(file) as f:
@@ -100,9 +111,11 @@ class AbstractModel(object):
   model contains the full computation graph, including loss, graident, save, summary in addition to inference
   a model has the following special members:
   [_module] the module object, which is actually the root node of the module recursive tree
-  [_trn_inputs] dictionary of trn input placeholder
-  [_val_inputs] dictionary of val input placeholder
-  [_tst_inputs] dictionary of tst input placeholder
+  [trn_inputs] dictionary of trn input placeholder
+  [val_inputs] dictionary of val input placeholder
+  [tst_inputs] dictionary of tst input placeholder
+  [val_outputs] dictionary of val output ops
+  [tst_outputs] dictionary of tst output ops
   """
   name_scope = 'AbstractModel'
 
@@ -110,18 +123,18 @@ class AbstractModel(object):
     self.config = config
     self._module = self._set_module()
 
-    self.trn_inputs = {}
-    self.val_inputs = {}
-    self.tst_inputs = {}
-    self.val_outputs = {}
-    self.tst_outputs = {}
+    self._trn_inputs = {}
+    self._val_inputs = {}
+    self._tst_inputs = {}
+    self._val_outputs = {}
+    self._tst_outputs = {}
 
     self._loss_op = tf.no_op()
     self._train_ops = []
-    self.saver = tf.no_op()
-    self.summary_op = tf.no_op()
+    self._saver = tf.no_op()
+    self._summary_op = tf.no_op()
     self._init_op = tf.no_op()
-    self.op2monitor = {}
+    self._op2monitor = {}
 
   def _set_module(self):
     """
@@ -153,17 +166,53 @@ class AbstractModel(object):
     """
     raise NotImplementedError("""please customize AbstractModel.set_loss""")
 
+  @property
+  def trn_inputs(self):
+    return self._trn_inputs
+
+  @property
+  def val_inputs(self):
+    return self._val_inputs
+
+  @property
+  def tst_inputs(self):
+    return self._tst_inputs
+
+  @property
+  def val_outputs(self):
+    return self._val_outputs
+
+  @property
+  def tst_outputs(self):
+    return self._tst_outputs
+
+  @property
+  def init_op(self):
+    return self._init_op
+
+  @property
+  def saver(self):
+    return self._saver
+
+  @property
+  def summary_op(self):
+    return self._summary_op
+
+  @property
+  def op2monitor(self):
+      return self._op2monitor
+
   def build_trn_val_graph(self):
     basegraph = tf.Graph()
-    self.trn_inputs = self._add_trn_input()
-    self.val_inputs = self._add_val_input()
+    self._trn_inputs = self._add_trn_input()
+    self._val_inputs = self._add_val_input()
     self._module.build_parameter_graph(basegraph)
     trn_outputs = self._module.get_out_ops_in_trn(basegraph, self.trn_inputs)
-    self.val_outputs = self._module.get_out_ops_in_val(basegraph, self.val_inputs)
+    self._val_outputs = self._module.get_out_ops_in_val(basegraph, self.val_inputs)
     self._loss_op = self._add_loss(self.trn_inputs, trn_outputs)
     self._calculate_gradient(basegraph)
 
-    _recursive_gather_op2monitor_helper(self._module, self.op2monitor)
+    _recursive_gather_op2monitor_helper(self._module, self._op2monitor)
     self._add_saver(basegraph)
     self._add_summary(basegraph)
     self._add_init(basegraph)
@@ -179,9 +228,9 @@ class AbstractModel(object):
 
   def build_tst_graph(self):
     basegraph = tf.Graph()
-    self.tst_inputs = self._add_tst_input()
+    self._tst_inputs = self._add_tst_input()
     self._module.build_parameter_graph(basegraph)
-    self.tst_outputs = self._module.get_out_ops_in_tst(basegraph, self.tst_inputs)
+    self._tst_outputs = self._module.get_out_ops_in_tst(basegraph, self.tst_inputs)
 
     self._add_saver(basegraph)
     self._add_init(basegraph)
@@ -200,11 +249,11 @@ class AbstractModel(object):
         tf.summary.scalar('loss', self._loss_op)
         for var in tf.trainable_variables():
           tf.summary.histogram(var.name + '/activations', var)
-        self.summary_op = tf.summary.merge_all()
+        self._summary_op = tf.summary.merge_all()
 
   def _add_saver(self, basegraph):
     with basegraph.as_default():
-      self.saver = tf.train.Saver(tf.trainable_variables(), max_to_keep=1000)
+      self._saver = tf.train.Saver(tf.trainable_variables(), max_to_keep=1000)
 
   def _add_init(self, basegraph):
     with basegraph.as_default():
