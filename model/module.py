@@ -20,6 +20,7 @@ class ModuleConfig(object):
     self.subconfigs = {}
     self.freeze = False
     self.lr_mult = 1.0
+    self.opt_alg = 'Adam'
 
   def load(self, cfg_dict):
     for key in cfg_dict:
@@ -98,16 +99,29 @@ class AbstractModel(object):
   """
   model contains the full computation graph, including loss, graident, save, summary in addition to inference
   a model has the following special members:
-  [module] the module object, which is actually the root node of the module recursive tree
+  [_module] the module object, which is actually the root node of the module recursive tree
+  [_trn_inputs] dictionary of trn input placeholder
+  [_val_inputs] dictionary of val input placeholder
+  [_tst_inputs] dictionary of tst input placeholder
   """
+  name_scope = 'AbstractModel'
+
   def __init__(self, config):
     self.config = config
-    self.module = self._set_module()
+    self._module = self._set_module()
+
+    self.trn_inputs = {}
+    self.val_inputs = {}
+    self.tst_inputs = {}
+    self.val_outputs = {}
+    self.tst_outputs = {}
 
     self._loss_op = tf.no_op()
-    self._train_op = tf.no_op()
-    self._saver = tf.no_op()
-    self._summary_op = tf.no_op()
+    self._train_ops = []
+    self.saver = tf.no_op()
+    self.summary_op = tf.no_op()
+    self._init_op = tf.no_op()
+    self.op2monitor = {}
 
   def _set_module(self):
     """
@@ -115,42 +129,46 @@ class AbstractModel(object):
     """
     raise NotImplementedError("""please customize AbstractModel.set_module""")
 
-  def _set_trn_input(self):
+  def _add_trn_input(self):
     """
     return dictionary of input placeholders
     """
     raise NotImplementedError("""please customize AbstractModel.set_trn_input""")
 
-  def _set_val_input(self):
+  def _add_val_input(self):
     """
     return dictionary of input placeholders
     """
     raise NotImplementedError("""please customize AbstractModel.set_val_input""")
 
-  def _set_tst_input(self):
+  def _add_tst_input(self):
     """
     return dictionary of input placeholders
     """
     raise NotImplementedError("""please customize AbstractModel.set_tst_input""")
 
-  def _set_loss(self):
+  def _add_loss(self, trn_inputs, trn_outputs):
+    """
+    return loss op
+    """
     raise NotImplementedError("""please customize AbstractModel.set_loss""")
-
-  @property
-  def saver(self):
-    return self._saver
-
-  @property
-  def summary_op(self):
-    return self._summary_op
 
   def build_trn_val_graph(self):
     basegraph = tf.Graph()
-    self.trn_inputs = self.set_trn_input()
-    self.val_inputs = self.set_val_input()
-    self.module.build_parameter_graph(basegraph)
-    self.trn_outputs = self.module.get_out_ops_in_trn(basegraph, trn_inputs)
-    self.val_outputs = self.module.get_out_ops_in_val(basegraph, val_inputs)
+    self.trn_inputs = self._add_trn_input()
+    self.val_inputs = self._add_val_input()
+    self._module.build_parameter_graph(basegraph)
+    trn_outputs = self._module.get_out_ops_in_trn(basegraph, self.trn_inputs)
+    self.val_outputs = self._module.get_out_ops_in_val(basegraph, self.val_inputs)
+    self._loss_op = self._add_loss(self.trn_inputs, trn_outputs)
+    self._calculate_gradient(basegraph)
+
+    _recursive_gather_op2monitor_helper(self._module, self.op2monitor)
+    self._add_saver(basegraph)
+    self._add_summary(basegraph)
+    self._add_init(basegraph)
+
+    return basegraph
 
   def build_trn_tst_graph(self):
     """
@@ -159,10 +177,21 @@ class AbstractModel(object):
     """
     self.build_trn_val_graph()
 
+  def build_tst_graph(self):
+    basegraph = tf.Graph()
+    self.tst_inputs = self._add_tst_input()
+    self._module.build_parameter_graph(basegraph)
+    self.tst_outputs = self._module.get_out_ops_in_tst(basegraph, self.tst_inputs)
+
+    self._add_saver(basegraph)
+    self._add_init(basegraph)
+
+    return basegraph
+
   def op_in_trn(self):
     return {
-      'loss_op': self.loss_op, 
-      'train_op': self.train_op,
+      'loss_op': self._loss_op, 
+      'train_ops': self._train_ops,
     }
 
   def _add_summary(self, basegraph):
@@ -171,12 +200,48 @@ class AbstractModel(object):
         tf.summary.scalar('loss', self._loss_op)
         for var in tf.trainable_variables():
           tf.summary.histogram(var.name + '/activations', var)
-        self._summary_op = tf.summary.merge_all()
+        self.summary_op = tf.summary.merge_all()
 
   def _add_saver(self, basegraph):
     with basegraph.as_default():
-      self._saver = tf.train.Saver(tf.trainable_variables(), max_to_keep=1000)
+      self.saver = tf.train.Saver(tf.trainable_variables(), max_to_keep=1000)
 
-  def _calculate_gradient(self):
-    pass
+  def _add_init(self, basegraph):
+    with basegraph.as_default():
+      with tf.variable_scope(self.name_scope):
+        self._init_op = tf.global_variables_initializer()
 
+  def _calculate_gradient(self, basegraph):
+    with basegraph.as_default():
+      with tf.variable_scope(self.name_scope):
+        _recursive_gradient_helper(self.module, self._loss_op, self.config.base_lr,
+          self._train_ops)
+
+
+def _recursive_gradient_helper(module, loss_op, base_lr,
+    train_ops):
+  weight = tf.get_collection(
+    tf.GraphKeys.TRAINABLE_VARIABLES, module.name_scope)
+  if len(weight) > 0 and not module.config.freeze:
+    learning_rate = base_lr * self.config.lr_mult
+
+    if module.config.opt_alg == 'Adam':
+      optimizer = tf.train.AdamOptimizer(learning_rate)
+    elif self.config.opt_alg == 'SGD':
+      optimizer = tf.train.GradientDescentOptimizer(learning_rate)
+    elif self.config.opt_alg == 'RMSProp':
+      optimizer = tf.train.RMSPropOptimizer(learning_rate)
+    grads_and_weights = optimizer.compute_gradients(loss_op, weight)
+    train_ops.append(optimizer.apply_gradients(grads_and_weights))
+  # recursive
+  for key in module.submodules:
+    submodule = module.submodules[key]
+    _recursive_gradient_helper(submodule, loss_op, base_lr, 
+      train_ops)
+
+
+def _recursive_gather_op2monitor_helper(module, op2monitor):
+  op2monitor.update(module.op2monitor)
+  for key in module.submodules:
+    submodule = module.submodules[key]
+    _recursive_gather_op2monitor_helper(submodule, op2monitor)
