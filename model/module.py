@@ -44,12 +44,12 @@ class ModuleConfig(object):
     out = {}
     for attr in self.__dict__:
       if attr == 'subcfgs':
-        val = a.__dict__[attr]
+        val = self.__dict__[attr]
         out['subcfgs'] = {}
         for key in val:
           out['subcfgs'][key] = val.save()
       else:
-        val = a.__dict__[attr]
+        val = self.__dict__[attr]
         if type(val) is not np.ndarray: # ignore nparray fields, which are used to initialize weights
           out[attr] = self.__dict__[attr]
     return out
