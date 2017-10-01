@@ -7,6 +7,7 @@ import json
 import enum
 
 import tensorflow as tf
+import numpy as np
 
 
 class Mode(enum.Enum):
