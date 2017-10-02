@@ -217,7 +217,7 @@ class AbstractModel(AbstractModule):
     self._outputs[self.DefaultKey.LOSS] = self._add_loss(basegraph)
     self._outputs[self.DefaultKey.TRAIN] = self._calculate_gradient(basegraph)
 
-    _recursive_gather_op2monitor_helper(self._module, self._op2monitor)
+    _recursive_gather_op2monitor_helper(self, self._op2monitor)
     self._outputs[self.DefaultKey.SAVER] = self._add_saver(basegraph)
     self._outputs[self.DefaultKey.SUMMARY] = self._add_summary(basegraph)
     self._outputs[self.DefaultKey.INIT] = self._add_init(basegraph)
@@ -227,7 +227,7 @@ class AbstractModel(AbstractModule):
   def build_tst_graph(self):
     basegraph = tf.Graph()
     self._inputs = self._add_input_in_mode(basegraph, Mode.TST)
-    self._module.build_parameter_graph(basegraph)
+    self.build_parameter_graph(basegraph)
     self._outputs = self.get_out_ops_in_mode(basegraph, self._inputs, Mode.TST)
 
     self._outputs[self.DefaultKey.SAVER] = self._add_saver(basegraph)
