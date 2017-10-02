@@ -281,7 +281,7 @@ def _recursive_gradient_helper(module, loss_op, base_lr,
   weight = tf.get_collection(
     tf.GraphKeys.TRAINABLE_VARIABLES, module.name_scope)
   if len(weight) > 0 and not module.config.freeze:
-    learning_rate = base_lr * self.config.lr_mult
+    learning_rate = base_lr * module.config.lr_mult
 
     if module.config.opt_alg == 'Adam':
       optimizer = tf.train.AdamOptimizer(learning_rate)
