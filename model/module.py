@@ -237,8 +237,8 @@ class AbstractModel(AbstractModule):
 
   def op_in_trn(self):
     return {
-      self.DefaultKey.LOSS: self._outputs[DefaultKey.LOSS],
-      self.DefaultKey.TRAIN: self._outputs[DefaultKey.TRAIN],
+      self.DefaultKey.LOSS: self._outputs[self.DefaultKey.LOSS],
+      self.DefaultKey.TRAIN: self._outputs[self.DefaultKey.TRAIN],
     }
 
   def op_in_val(self):
