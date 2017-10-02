@@ -134,6 +134,9 @@ class ModelConfig(ModuleConfig):
     self.val_iter = 100
     self.monitor_iter = 1
     self.base_lr = 1e-4
+    self.decay_schema = '' # , piecewise_constant
+    self.decay_boundarys = []
+    self.decay_values = []
 
   def load(self, file):
     with open(file) as f:
