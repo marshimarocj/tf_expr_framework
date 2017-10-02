@@ -209,7 +209,7 @@ class AbstractModel(AbstractModule):
   def summary_op(self):
     return self._summary_op
 
-  def build_trn_tst_graph(self):
+  def build_trn_tst_graph(self, decay_boundarys=[]):
     basegraph = tf.Graph()
     self._inputs = self._add_input_in_mode(basegraph, Mode.TRN_VAL)
     self.build_parameter_graph(basegraph)
