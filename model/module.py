@@ -111,7 +111,7 @@ class AbstractModule(object):
     """
     raise NotImplementedError("""please customize AbstractModule.build_parameter_graph""")
 
-  def get_out_ops_in_mode(self, basegraph, in_ops):
+  def get_out_ops_in_mode(self, basegraph, in_ops, mode):
     """
     return out_ops (a dictionary) given in_ops (a dictionary)
     """
