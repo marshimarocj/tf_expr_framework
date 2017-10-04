@@ -77,20 +77,28 @@ class TrnTst(object):
   def feed_data_and_monitor_in_trn(self, data, sess, step):
     raise NotImplementedError("""please customize feed_data_and_monitor""")
 
-  # return summarystr
   def feed_data_and_summary(self, data, sess):
+    """
+    return summarystr
+    """
     raise NotImplementedError("""please customize feed_data_and_summary""")
 
-  # return loss value  
   def feed_data_and_run_loss_op_in_val(self, data, sess):
+    """
+    return loss value
+    """
     raise NotImplementedError("""please customize feed_data_and_run_loss_op_in_val""")
 
-  # add eval result to metrics dictionary, key is metric name, val is metric value
   def predict_and_eval_in_val(self, sess, tst_reader, metrics):
+    """
+    add eval result to metrics dictionary, key is metric name, val is metric value
+    """
     raise NotImplementedError("""please customize predict_and_eval_in_val""")
 
-  # write predict result to predict_file
   def predict_in_tst(self, sess, tst_reader, predict_file):
+    """
+    write predict result to predict_file
+    """
     raise NotImplementedError("""please customize predict_in_tst""")
 
   ######################################

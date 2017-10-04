@@ -104,24 +104,24 @@ class AbstractModule(object):
     """
     raise NotImplementedError("""please customize AbstractModule._set_submods""")
 
-  def _build_parameter_graph(self, basegraph):
+  def _build_parameter_graph(self):
     """
     this would be called before get_out_ops_in_mode. 
     shared parts between trn and tst are encouraged to be placed in this function
     """
     raise NotImplementedError("""please customize AbstractModule.build_parameter_graph""")
 
-  def get_out_ops_in_mode(self, basegraph, in_ops, mode):
+  def get_out_ops_in_mode(self, in_ops, mode):
     """
     return out_ops (a dictionary) given in_ops (a dictionary)
     """
     raise NotImplementedError("""please customize AbstractModule.get_out_ops_in_mode""")
 
-  def build_parameter_graph(self, basegraph):
-    self._build_parameter_graph(basegraph)
+  def build_parameter_graph(self):
+    self._build_parameter_graph()
     for key in self._submods:
       submod = self._submods[key]
-      submod.build_parameter_graph(basegraph)
+      submod.build_parameter_graph()
 
 
 class ModelConfig(ModuleConfig):
@@ -171,13 +171,13 @@ class AbstractModel(AbstractModule):
     self._inputs = {}
     self._outputs = {}
 
-  def _add_input_in_mode(self, basegraph, mode):
+  def _add_input_in_mode(self, mode):
     """
     return dictionary of input placeholders
     """
     raise NotImplementedError("""please customize AbstractModel._add_input_in_mode""")
 
-  def _add_loss(self, basegraph):
+  def _add_loss(self):
     """
     return loss op
     """
@@ -211,27 +211,29 @@ class AbstractModel(AbstractModule):
 
   def build_trn_tst_graph(self, decay_boundarys=[]):
     basegraph = tf.Graph()
-    self._inputs = self._add_input_in_mode(basegraph, Mode.TRN_VAL)
-    self.build_parameter_graph(basegraph)
-    self._outputs = self.get_out_ops_in_mode(basegraph, self._inputs, Mode.TRN_VAL)
-    self._outputs[self.DefaultKey.LOSS] = self._add_loss(basegraph)
-    self._outputs[self.DefaultKey.TRAIN] = self._calculate_gradient(basegraph)
+    with basegraph.as_default():
+      self._inputs = self._add_input_in_mode(Mode.TRN_VAL)
+      self.build_parameter_graph()
+      self._outputs = self.get_out_ops_in_mode(self._inputs, Mode.TRN_VAL)
+      self._outputs[self.DefaultKey.LOSS] = self._add_loss()
+      self._outputs[self.DefaultKey.TRAIN] = self._calculate_gradient()
 
-    _recursive_gather_op2monitor_helper(self, self._op2monitor)
-    self._outputs[self.DefaultKey.SAVER] = self._add_saver(basegraph)
-    self._outputs[self.DefaultKey.SUMMARY] = self._add_summary(basegraph)
-    self._outputs[self.DefaultKey.INIT] = self._add_init(basegraph)
+      _recursive_gather_op2monitor_helper(self, self._op2monitor)
+      self._outputs[self.DefaultKey.SAVER] = self._add_saver()
+      self._outputs[self.DefaultKey.SUMMARY] = self._add_summary()
+      self._outputs[self.DefaultKey.INIT] = self._add_init()
 
     return basegraph
 
   def build_tst_graph(self):
     basegraph = tf.Graph()
-    self._inputs = self._add_input_in_mode(basegraph, Mode.TST)
-    self.build_parameter_graph(basegraph)
-    self._outputs = self.get_out_ops_in_mode(basegraph, self._inputs, Mode.TST)
+    with basegraph.as_default():
+      self._inputs = self._add_input_in_mode(Mode.TST)
+      self.build_parameter_graph()
+      self._outputs = self.get_out_ops_in_mode(self._inputs, Mode.TST)
 
-    self._outputs[self.DefaultKey.SAVER] = self._add_saver(basegraph)
-    self._outputs[self.DefaultKey.INIT] = self._add_init(basegraph)
+      self._outputs[self.DefaultKey.SAVER] = self._add_saver()
+      self._outputs[self.DefaultKey.INIT] = self._add_init()
 
     return basegraph
 
@@ -246,33 +248,29 @@ class AbstractModel(AbstractModule):
       self.DefaultKey.LOSS: self._outputs[self.DefaultKey.LOSS],
     }
 
-  def _add_summary(self, basegraph):
-    with basegraph.as_default():
-      with tf.variable_scope(self.name_scope):
-        tf.summary.scalar('loss', self._outputs[self.DefaultKey.LOSS])
-        for var in tf.trainable_variables():
-          tf.summary.histogram(var.name + '/activations', var)
-        summary_op = tf.summary.merge_all()
+  def _add_summary(self):
+    with tf.variable_scope(self.name_scope):
+      tf.summary.scalar('loss', self._outputs[self.DefaultKey.LOSS])
+      for var in tf.trainable_variables():
+        tf.summary.histogram(var.name + '/activations', var)
+      summary_op = tf.summary.merge_all()
     return summary_op
 
-  def _add_saver(self, basegraph):
-    with basegraph.as_default():
-      saver = tf.train.Saver(tf.trainable_variables(), max_to_keep=1000)
+  def _add_saver(self):
+    saver = tf.train.Saver(tf.trainable_variables(), max_to_keep=1000)
     return saver
 
-  def _add_init(self, basegraph):
-    with basegraph.as_default():
-      with tf.variable_scope(self.name_scope):
-        init = tf.global_variables_initializer()
+  def _add_init(self):
+    with tf.variable_scope(self.name_scope):
+      init = tf.global_variables_initializer()
     return init
 
-  def _calculate_gradient(self, basegraph):
+  def _calculate_gradient(self):
     train_ops = []
     loss_op = self._outputs[self.DefaultKey.LOSS]
-    with basegraph.as_default():
-      with tf.variable_scope(self.name_scope):
-        _recursive_gradient_helper(self, loss_op, self.config.base_lr,
-          train_ops)
+    with tf.variable_scope(self.name_scope):
+      _recursive_gradient_helper(self, loss_op, self.config.base_lr,
+        train_ops)
     return train_ops
 
 
