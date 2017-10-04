@@ -203,11 +203,11 @@ class AbstractModel(AbstractModule):
 
   @property
   def saver(self):
-    return self._saver
+    return self._outputs[self.DefaultKey.SAVER]
 
   @property
   def summary_op(self):
-    return self._summary_op
+    return self._outputs[self.DefaultKey.SUMMARY]
 
   def build_trn_tst_graph(self, decay_boundarys=[]):
     basegraph = tf.Graph()
