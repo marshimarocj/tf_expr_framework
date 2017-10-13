@@ -141,15 +141,16 @@ class TrnTst(object):
     batch_size = self.model_cfg.tst_batch_size
 
     # loss on validation
-    iter_num = 0
-    avg_loss = 0.
-    for data in tst_reader.yield_val_batch(batch_size):
-      loss = self.feed_data_and_run_loss_op_in_val(data, sess)
-      avg_loss += loss
-      iter_num += 1
+    if self.model_cfg.val_loss:
+      iter_num = 0
+      avg_loss = 0.
+      for data in tst_reader.yield_val_batch(batch_size):
+        loss = self.feed_data_and_run_loss_op_in_val(data, sess)
+        avg_loss += loss
+        iter_num += 1
 
-    avg_loss /= iter_num
-    metrics['loss'] = avg_loss
+      avg_loss /= iter_num
+      metrics['loss'] = avg_loss
 
     self.predict_and_eval_in_val(sess, tst_reader, metrics)
 
@@ -204,9 +205,6 @@ class TrnTst(object):
         val_log_file = os.path.join(self.path_cfg.log_dir, 'val_metrics.%d.json'%epoch)
         with open(val_log_file, 'w') as fout:
           json.dump(metrics, fout, indent=2)
-
-      # val_metric_file = self.path_cfg.val_metric_file
-      # cPickle.dump(metric_history, open(val_metric_file, 'w'))
 
   def test(self, tst_reader, memory_fraction=1.0):
     tst_graph = self.model.build_tst_graph()

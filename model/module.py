@@ -132,6 +132,7 @@ class ModelConfig(ModuleConfig):
     self.tst_batch_size = 128
     self.num_epoch = 100
     self.val_iter = 100
+    self.val_loss = True
     self.monitor_iter = 1
     self.base_lr = 1e-4
     self.decay_schema = '' # , piecewise_constant
