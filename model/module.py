@@ -13,6 +13,7 @@ import numpy as np
 class Mode(enum.Enum):
   TRN_VAL = 0
   TST = 1
+  ROLLOUT = 2
 
 
 class ModuleConfig(object):
@@ -81,10 +82,10 @@ class AbstractModule(object):
   class OutKey(enum.Enum):
     pass
 
-  def __init__(self, config):
+  def __init__(self, config, **kwargs):
     self._config = config
     self._op2monitor = {}
-    self._submods = self._set_submods()
+    self._submods = self._set_submods(**kwargs)
 
   @property
   def config(self):

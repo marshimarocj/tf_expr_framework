@@ -107,27 +107,32 @@ class TrnTst(object):
   def _iterate_epoch(self,
       sess, trn_reader, tst_reader, summarywriter, step, total_step, epoch):
     trn_batch_size = self.model_cfg.trn_batch_size
-    trn_time = time.time()
+    trn_time = 0.
     trn_reader.reset()
     for data in trn_reader.yield_trn_batch(trn_batch_size):
-      if self.model_cfg.monitor_iter > 0 and step % self.model_cfg.monitor_iter == 0:
-        self.feed_data_and_monitor_in_trn(data, sess, step)
-
+      tic = time.time()
       self.feed_data_and_trn(data, sess)
+      toc = time.time()
+      trn_time += toc - tic
 
       step += 1
 
+      if self.model_cfg.monitor_iter > 0 and step % self.model_cfg.monitor_iter == 0:
+        self.feed_data_and_monitor_in_trn(data, sess, step)
+
       if self.model_cfg.val_iter > 0 and step % self.model_cfg.val_iter == 0:
-        val_time = time.time()
+        tic = time.time()
         metrics = self._validation(sess, tst_reader)
-        _end_time = time.time()
+        toc = time.time()
+        val_time = toc - tic
 
         self._logger.info('step (%d/%d)', step, total_step)
-        self._logger.info('%f s for trn', val_time - trn_time)
-        self._logger.info('%f s for val', _end_time - val_time)
+        self._logger.info('%f s for trn', trn_time)
+        self._logger.info('%f s for val', val_time)
+        trn_time = 0.
+        rollout_time = 0.
         for key in metrics:
           self._logger.info('%s:%.4f', key, metrics[key])
-        trn_time = time.time()
 
     summarystr = self.feed_data_and_summary(data, sess)
     summarywriter.add_summary(summarystr, step)
@@ -218,3 +223,58 @@ class TrnTst(object):
       self.model.saver.restore(sess, self.path_cfg.model_file)
 
       self.predict_in_tst(sess, tst_reader, self.path_cfg.predict_file)
+
+
+class PGTrnTst(TrnTst):
+  ######################################
+  # functions to customize 
+  ######################################
+  def feed_data_and_rollout(self, data, sess):
+    """
+    return data
+    """
+    raise NotImplementedError("""please customize feed_data_and_trn""")
+
+  def _iterate_epoch(self,
+      sess, trn_reader, tst_reader, summarywriter, step, total_step, epoch):
+    trn_batch_size = self.model_cfg.trn_batch_size
+    trn_time = 0.
+    rollout_time = 0.
+    trn_reader.reset()
+    for data in trn_reader.yield_trn_batch(trn_batch_size):
+      tic = time.time()
+      data = self.feed_data_and_rollout(data, sess)
+      toc = time.time()
+      rollout_time += toc - tic
+
+      tic = toc
+      self.feed_data_and_trn(data, sess)
+      toc = time.time()
+      trn_time += toc - tic
+
+      step += 1
+
+      if self.model_cfg.monitor_iter > 0 and step % self.model_cfg.monitor_iter == 0:
+        self.feed_data_and_monitor_in_trn(data, sess, step)
+
+      if self.model_cfg.val_iter > 0 and step % self.model_cfg.val_iter == 0:
+        tic = time.time()
+        metrics = self._validation(sess, tst_reader)
+        toc = time.time()
+        val_time = toc - tic
+
+        self._logger.info('step (%d/%d)', step, total_step)
+        self._logger.info('%f s for trn', trn_time)
+        self._logger.info('%f s for val', val_time)
+        self._logger.info('%f s for rollout', rollout_time)
+        trn_time = 0.
+        rollout_time = 0.
+        for key in metrics:
+          self._logger.info('%s:%.4f', key, metrics[key])
+
+    summarystr = self.feed_data_and_summary(data, sess)
+    summarywriter.add_summary(summarystr, step)
+    self.model.saver.save(
+      sess, os.path.join(self.path_cfg.model_dir, 'epoch'), global_step=epoch)
+
+    return step
