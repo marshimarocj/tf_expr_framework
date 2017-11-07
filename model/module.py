@@ -187,7 +187,7 @@ class AbstractModel(AbstractModule):
 
   def op_in_tst(self):
     """
-    return dictionary of op in val
+    return dictionary of op in tst
     """
     raise NotImplementedError("""please customize AbstractModel.op_in_tst""")
 
@@ -306,22 +306,87 @@ def _recursive_gather_op2monitor_helper(module, op2monitor):
 
 
 class AbstractPGModel(AbstractModel):
+  """
+  model is the root node in the tree of module composition and is a special type of module. 
+  therefore, it is an inheritance of AbstractModule. 
+  it contains the full computation graph, including loss, graident, save, summary in addition to inference
+  a model has the following special members:
+  """
+  name_scope = 'AbstractModel'
+
+  class DefaultKey(enum.Enum):
+    INIT = 'init'
+    LOSS = 'loss'
+    TRAIN = 'train'
+    SAVER = 'saver'
+    SUMMARY = 'summary'
+
+  def __init__(self, config):
+    AbstractModule.__init__(self, config)
+
+    self._trnval_inputs = {}
+    self._trnval_outputs = {}
+    self._rollout_inputs = {}
+    self._rollout_outputs = {}
+    self._tst_inputs = {}
+    self._tst_outputs = {}
+
+  def op_in_rollout(self):
+    """
+    return dictionary of op in rollout
+    """
+    raise NotImplementedError("""please customize AbstractModel.op_in_rollout""")
+
+  @property
+  def trnval_inputs(self):
+    return self._trnval_inputs
+
+  @property
+  def trnval_outputs(self):
+    return self._trnval_outputs
+
+  @property
+  def rollout_inputs(self):
+    return self._rollout_inputs
+
+  @property
+  def rollout_outputs(self):
+    return self._rollout_outputs
+
+  @property
+  def tst_inputs(self):
+    return self._tst_inputs
+
+  @property
+  def tst_outputs(self):
+    return self._tst_outputs
+
   def build_trn_tst_graph(self, decay_boundarys=[]):
     basegraph = tf.Graph()
     with basegraph.as_default():
-      self._inputs = self._add_input_in_mode(Mode.TRN_VAL)
-      inputs = self._add_input_in_mode(Mode.ROLLOUT)
-      self._inputs.update(inputs)
+      self._trnval_inputs = self._add_input_in_mode(Mode.TRN_VAL)
+      self._rollout_inputs = self._add_input_in_mode(Mode.ROLLOUT)
       self.build_parameter_graph()
-      self._outputs = self.get_out_ops_in_mode(self._inputs, Mode.TRN_VAL)
-      outputs = self.get_out_ops_in_mode(self._inputs, Mode.ROLLOUT)
-      self._outputs.update(outputs)
-      self._outputs[self.DefaultKey.LOSS] = self._add_loss()
-      self._outputs[self.DefaultKey.TRAIN] = self._calculate_gradient()
+      self._trnval_outputs = self.get_out_ops_in_mode(self._trnval_inputs, Mode.TRN_VAL)
+      self._trnval_outputs[self.DefaultKey.LOSS] = self._add_loss()
+      self._trnval_outputs[self.DefaultKey.TRAIN] = self._calculate_gradient()
+      self._rollout_outputs = self.get_out_ops_in_mode(self._rollout_inputs, Mode.ROLLOUT)
 
       _recursive_gather_op2monitor_helper(self, self._op2monitor)
-      self._outputs[self.DefaultKey.SAVER] = self._add_saver()
-      self._outputs[self.DefaultKey.SUMMARY] = self._add_summary()
-      self._outputs[self.DefaultKey.INIT] = self._add_init()
+      self._trnval_outputs[self.DefaultKey.SAVER] = self._add_saver()
+      self._trnval_outputs[self.DefaultKey.SUMMARY] = self._add_summary()
+      self._trnval_outputs[self.DefaultKey.INIT] = self._add_init()
+
+    return basegraph
+
+  def build_tst_graph(self):
+    basegraph = tf.Graph()
+    with basegraph.as_default():
+      self._tst_inputs = self._add_input_in_mode(Mode.TST)
+      self.build_parameter_graph()
+      self._tst_outputs = self.get_out_ops_in_mode(self._tst_inputs, Mode.TST)
+
+      self._tst_outputs[self.DefaultKey.SAVER] = self._add_saver()
+      self._tst_outputs[self.DefaultKey.INIT] = self._add_init()
 
     return basegraph
