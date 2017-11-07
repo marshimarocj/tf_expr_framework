@@ -303,3 +303,25 @@ def _recursive_gather_op2monitor_helper(module, op2monitor):
   for key in module.submods:
     submod = module.submods[key]
     _recursive_gather_op2monitor_helper(submod, op2monitor)
+
+
+class AbstractPGModel(AbstractModel):
+  def build_trn_tst_graph(self, decay_boundarys=[]):
+    basegraph = tf.Graph()
+    with basegraph.as_default():
+      self._inputs = self._add_input_in_mode(Mode.TRN_VAL)
+      inputs = self._add_input_in_mode(Mode.ROLLOUT)
+      self._inputs.update(inputs)
+      self.build_parameter_graph()
+      self._outputs = self.get_out_ops_in_mode(self._inputs, Mode.TRN_VAL)
+      outputs = self.get_out_ops_in_mode(self._inputs, Mode.ROLLOUT)
+      self._outputs.update(outputs)
+      self._outputs[self.DefaultKey.LOSS] = self._add_loss()
+      self._outputs[self.DefaultKey.TRAIN] = self._calculate_gradient()
+
+      _recursive_gather_op2monitor_helper(self, self._op2monitor)
+      self._outputs[self.DefaultKey.SAVER] = self._add_saver()
+      self._outputs[self.DefaultKey.SUMMARY] = self._add_summary()
+      self._outputs[self.DefaultKey.INIT] = self._add_init()
+
+    return basegraph
