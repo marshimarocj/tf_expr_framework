@@ -390,3 +390,14 @@ class AbstractPGModel(AbstractModel):
       self._tst_outputs[self.DefaultKey.INIT] = self._add_init()
 
     return basegraph
+
+  def op_in_trn(self):
+    return {
+      self.DefaultKey.LOSS: self._trnval_outputs[self.DefaultKey.LOSS],
+      self.DefaultKey.TRAIN: self._trnval_outputs[self.DefaultKey.TRAIN],
+    }
+
+  def op_in_val(self):
+    return {
+      self.DefaultKey.LOSS: self._trnval_outputs[self.DefaultKey.LOSS],
+    }
