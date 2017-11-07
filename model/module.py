@@ -82,10 +82,10 @@ class AbstractModule(object):
   class OutKey(enum.Enum):
     pass
 
-  def __init__(self, config, **kwargs):
+  def __init__(self, config):
     self._config = config
     self._op2monitor = {}
-    self._submods = self._set_submods(**kwargs)
+    self._submods = self._set_submods()
 
   @property
   def config(self):
