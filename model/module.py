@@ -8,6 +8,7 @@ import enum
 
 import tensorflow as tf
 import numpy as np
+import bunch
 
 
 class Mode(enum.Enum):
