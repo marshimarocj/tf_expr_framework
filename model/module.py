@@ -284,6 +284,10 @@ def _recursive_gradient_helper(module, loss_op, base_lr,
   if len(weight) > 0 and not module.config.freeze:
     learning_rate = base_lr * module.config.lr_mult
 
+    print learning_rate, module.name_scope
+    for w in weight:
+      print w.name
+
     if module.config.opt_alg == 'Adam':
       optimizer = tf.train.AdamOptimizer(learning_rate)
     elif self.config.opt_alg == 'SGD':
