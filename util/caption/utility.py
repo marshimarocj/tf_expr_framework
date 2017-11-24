@@ -338,34 +338,34 @@ def beamsearch_recover_captions(wordids, cum_log_probs, pres, ends, pool_size):
         caption.append(wordids[t][b, pre])
         pre = pres[t][b, pre]
       caption = np.array(caption, np.int32)[::-1]
-      if len(sent_pool[b]) < pool_size:
-        sent_pool[b].append((log_prob, caption))
+      # if len(sent_pool[b]) < pool_size:
+      sent_pool[b].append((log_prob, caption))
 
   # in case there's not enough automatically ending candiates
-  _ends = ends[n]
-  b2ks = {}
-  for end in _ends:
-    b = end[0]
-    k = end[1]
-    if b not in b2ks:
-      b2ks[b] = set()
-    b2ks[b].add(k)
-  for b in range(batch_size):
-    if len(sent_pool[b]) >= pool_size:
-      continue
-    end_idxs = b2ks[b] if b in b2ks else set()
-    for k in range(beam_width):
-      if k in end_idxs or len(sent_pool[b]) >= pool_size:
-        continue
-      pre = pres[n][b, k]
-      caption = []
-      log_prob = cum_log_probs[n][b, k]/(n+1)
-      pre = k
-      for t in xrange(n, -1, -1):
-        caption.append(wordids[t][b, pre])
-        pre = pres[t][b, pre]
-      caption = np.array(caption, np.int32)[::-1]
-      sent_pool[b].append((log_prob, caption))
+  # _ends = ends[n]
+  # b2ks = {}
+  # for end in _ends:
+  #   b = end[0]
+  #   k = end[1]
+  #   if b not in b2ks:
+  #     b2ks[b] = set()
+  #   b2ks[b].add(k)
+  # for b in range(batch_size):
+  #   if len(sent_pool[b]) >= pool_size:
+  #     continue
+  #   end_idxs = b2ks[b] if b in b2ks else set()
+  #   for k in range(beam_width):
+  #     if k in end_idxs or len(sent_pool[b]) >= pool_size:
+  #       continue
+  #     pre = pres[n][b, k]
+  #     caption = []
+  #     log_prob = cum_log_probs[n][b, k]/(n+1)
+  #     pre = k
+  #     for t in xrange(n, -1, -1):
+  #       caption.append(wordids[t][b, pre])
+  #       pre = pres[t][b, pre]
+  #     caption = np.array(caption, np.int32)[::-1]
+  #     sent_pool[b].append((log_prob, caption))
 
   out = []
   for b, sents in enumerate(sent_pool):
