@@ -220,7 +220,8 @@ class TrnTst(object):
         sess = tf_debug.LocalCLIDebugWrapperSession(sess)
         sess.add_tensor_filter("has_inf_or_nan", tf_debug.has_inf_or_nan)
       sess.run(self.model.init_op)
-      self.model.saver.restore(sess, self.path_cfg.model_file)
+      if self.path_cfg.model_file is not None:
+        self.model.saver.restore(sess, self.path_cfg.model_file)
 
       self.predict_in_tst(sess, tst_reader, self.path_cfg.predict_file)
 
