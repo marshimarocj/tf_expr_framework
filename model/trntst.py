@@ -272,7 +272,6 @@ class PGTrnTst(TrnTst):
         rollout_time = 0.
         for key in metrics:
           self._logger.info('%s:%.4f', key, metrics[key])
-      del data
 
     summarystr = self.feed_data_and_summary(data, sess)
     summarywriter.add_summary(summarystr, step)
