@@ -341,7 +341,7 @@ def beamsearch_recover_captions(wordids, cum_log_probs, pres, ends, pool_size):
       # if len(sent_pool[b]) < pool_size:
       sent_pool[b].append((log_prob, caption))
 
-  # in case there's not enough automatically ending candiates
+  # # in case there's not enough automatically ending candiates
   # _ends = ends[n]
   # b2ks = {}
   # for end in _ends:
