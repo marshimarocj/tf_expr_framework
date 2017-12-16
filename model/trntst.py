@@ -101,6 +101,9 @@ class TrnTst(object):
     """
     raise NotImplementedError("""please customize predict_in_tst""")
 
+  def customize_func_after_each_epoch(self, epoch):
+    pass
+
   ######################################
   # boilerpipe functions
   ######################################
@@ -194,7 +197,6 @@ class TrnTst(object):
       for key in metrics:
         self._logger.info('%s:%.4f', key, metrics[key])
 
-      # metric_history = []
       step = 0
       for epoch in xrange(base_epoch, self.model_cfg.num_epoch):
         step = self._iterate_epoch(
@@ -202,7 +204,6 @@ class TrnTst(object):
 
         metrics = self._validation(sess, tst_reader)
         metrics['epoch'] = epoch
-        # metric_history.append(metrics)
 
         self._logger.info('epoch (%d/%d)', epoch, self.model_cfg.num_epoch)
         for key in metrics:
@@ -210,6 +211,8 @@ class TrnTst(object):
         val_log_file = os.path.join(self.path_cfg.log_dir, 'val_metrics.%d.json'%epoch)
         with open(val_log_file, 'w') as fout:
           json.dump(metrics, fout, indent=2)
+
+        self.customize_func_after_each_epoch(epoch)
 
   def test(self, tst_reader, memory_fraction=1.0):
     tst_graph = self.model.build_tst_graph()
