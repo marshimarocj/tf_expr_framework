@@ -14,6 +14,7 @@ class Mode(enum.Enum):
   TRN_VAL = 0
   TST = 1
   ROLLOUT = 2
+  SCORE = 3
 
 
 class ModuleConfig(object):
@@ -328,7 +329,7 @@ class AbstractPGModel(AbstractModel):
     """
     return dictionary of op in rollout
     """
-    raise NotImplementedError("""please customize AbstractModel.op_in_rollout""")
+    raise NotImplementedError("""please customize AbstractPGModel.op_in_rollout""")
 
   @property
   def rollout_inputs(self):
@@ -348,6 +349,58 @@ class AbstractPGModel(AbstractModel):
       self._outputs[self.DefaultKey.LOSS] = self._add_loss()
       self._outputs[self.DefaultKey.TRAIN] = self._calculate_gradient()
       self._rollout_outputs = self.get_out_ops_in_mode(self._rollout_inputs, Mode.ROLLOUT)
+
+      _recursive_gather_op2monitor_helper(self, self._op2monitor)
+      self._outputs[self.DefaultKey.SAVER] = self._add_saver()
+      self._outputs[self.DefaultKey.SUMMARY] = self._add_summary()
+      self._outputs[self.DefaultKey.INIT] = self._add_init()
+
+    return basegraph
+
+
+class AbstractStructModel(AbstractPGModel):
+  """
+  model is the root node in the tree of module composition and is a special type of module. 
+  therefore, it is an inheritance of AbstractModule. 
+  it contains the full computation graph, including loss, graident, save, summary in addition to inference
+  a model has the following special members:
+  """
+  def __init__(self, config):
+    AbstractModule.__init__(self, config)
+
+    self._inputs = {}
+    self._outputs = {}
+    self._rollout_inputs = {}
+    self._rollout_outputs = {}
+    self._score_inputs = {}
+    self._score_outputs = {}
+
+  def op_in_score(self):
+    """
+    return dictionary of op in rollout
+    """
+    raise NotImplementedError("""please customize AbstractStructModel.op_in_score""")
+
+  @property
+  def score_inputs(self):
+    return self._score_inputs
+
+  @property
+  def score_outputs(self):
+    return self._score_outputs
+
+  def build_trn_tst_graph(self, decay_boundarys=[]):
+    basegraph = tf.Graph()
+    with basegraph.as_default():
+      self._inputs = self._add_input_in_mode(Mode.TRN_VAL)
+      self._rollout_inputs = self._add_input_in_mode(Mode.ROLLOUT)
+      self._score_inputs = self._add_input_in_mode(Mode.SCORE)
+      self.build_parameter_graph()
+      self._outputs = self.get_out_ops_in_mode(self._inputs, Mode.TRN_VAL)
+      self._outputs[self.DefaultKey.LOSS] = self._add_loss()
+      self._outputs[self.DefaultKey.TRAIN] = self._calculate_gradient()
+      self._rollout_outputs = self.get_out_ops_in_mode(self._rollout_inputs, Mode.ROLLOUT)
+      self._score_outputs = self.get_out_ops_in_mode(self._score_inputs, Mode.SCORE)
 
       _recursive_gather_op2monitor_helper(self, self._op2monitor)
       self._outputs[self.DefaultKey.SAVER] = self._add_saver()

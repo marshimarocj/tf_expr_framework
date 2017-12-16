@@ -234,8 +234,11 @@ class PGTrnTst(TrnTst):
     """
     return data
     """
-    raise NotImplementedError("""please customize feed_data_and_trn""")
+    raise NotImplementedError("""please customize feed_data_and_rollout""")
 
+  ######################################
+  # boilerpipe functions
+  ######################################
   def _iterate_epoch(self,
       sess, trn_reader, tst_reader, summarywriter, step, total_step, epoch):
     trn_batch_size = self.model_cfg.trn_batch_size
@@ -279,3 +282,77 @@ class PGTrnTst(TrnTst):
       sess, os.path.join(self.path_cfg.model_dir, 'epoch'), global_step=epoch)
 
     return step
+
+
+class StructTrnTst(PGTrnTst):
+  ######################################
+  # functions to customize 
+  ######################################
+  def init_pool(self):
+    raise NotImplementedError("""please customzie init_pool""")
+
+  def feed_data_and_score(self, data, sess):
+    """
+    return data
+    """
+    raise NotImplementedError("""please customize feed_data_and_score""")
+
+  def update_pool(self, data):
+    """
+    return data
+    """
+    raise NotImplementedError("""please customize update_pool""")
+
+  ######################################
+  # boilerpipe functions
+  ######################################
+  def _iterate_epoch(self,
+      sess, trn_reader, tst_reader, summarywriter, step, total_step, epoch):
+    trn_batch_size = self.model_cfg.trn_batch_size
+    trn_time = 0.
+    rollout_time = 0.
+    trn_reader.reset()
+    for data in trn_reader.yield_trn_batch(trn_batch_size):
+      tic = time.time()
+      data = self.feed_data_and_rollout(data, sess)
+      data = self.feed_data_and_score(data, sess)
+      data = self.update_pool(data)
+      toc = time.time()
+      rollout_time += toc - tic
+
+      tic = toc
+      self.feed_data_and_trn(data, sess)
+      toc = time.time()
+      trn_time += toc - tic
+
+      step += 1
+
+      if self.model_cfg.monitor_iter > 0 and step % self.model_cfg.monitor_iter == 0:
+        self.feed_data_and_monitor_in_trn(data, sess, step)
+
+      if self.model_cfg.val_iter > 0 and step % self.model_cfg.val_iter == 0:
+        tic = time.time()
+        metrics = self._validation(sess, tst_reader)
+        toc = time.time()
+        val_time = toc - tic
+
+        self._logger.info('step (%d/%d)', step, total_step)
+        self._logger.info('%f s for trn', trn_time)
+        self._logger.info('%f s for val', val_time)
+        self._logger.info('%f s for finding most violated constraints', rollout_time)
+        trn_time = 0.
+        rollout_time = 0.
+        for key in metrics:
+          self._logger.info('%s:%.4f', key, metrics[key])
+
+    summarystr = self.feed_data_and_summary(data, sess)
+    summarywriter.add_summary(summarystr, step)
+    self.model.saver.save(
+      sess, os.path.join(self.path_cfg.model_dir, 'epoch'), global_step=epoch)
+
+    return step
+
+  def train(self, trn_reader, tst_reader, memory_fraction=1.0, resume=False):
+    self.init_pool()
+
+    PGTrnTst.train(self, trn_reader, tst_reader, memory_fraction=memory_fraction, resume=resume)
