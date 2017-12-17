@@ -104,6 +104,12 @@ class TrnTst(object):
   def customize_func_after_each_epoch(self, epoch):
     pass
 
+  def manual_init_weight(self):
+    """
+    manual initialize weight
+    """
+    raise NotImplementedError("""please customize manual_init_weight""")
+
   ######################################
   # boilerpipe functions
   ######################################
@@ -164,7 +170,7 @@ class TrnTst(object):
 
     return metrics
 
-  def train(self, trn_reader, tst_reader, memory_fraction=1.0, resume=False):
+  def train(self, trn_reader, tst_reader, memory_fraction=1.0, resume=False, manual_init=False):
     batch_size = self.model_cfg.trn_batch_size
     batches_per_epoch = (trn_reader.num_record() + batch_size - 1) / batch_size
     total_step = batches_per_epoch * self.model_cfg.num_epoch
@@ -189,6 +195,8 @@ class TrnTst(object):
         base_epoch = int(data[-1]) + 1
       else:
         base_epoch = 0
+        if manual_init:
+          self.manual_init_weight()
       summarywriter = tf.summary.FileWriter(self.path_cfg.log_dir, graph=sess.graph)
 
       # round 0, just for quick checking

@@ -23,7 +23,7 @@ def init_weight_from_singlemodel(ckpt_file, map_var_from_single_to_ensemble):
   ensemble_key2val = {}
   for key in map_var_from_single_to_ensemble.iterkeys():
     ensemble_key = map_var_from_single_to_ensemble[key]
-    ensemble_key2val[key] = single_key2val[key]
+    ensemble_key2val[ensemble_key] = single_key2val[key]
   assign_op, feed_dict = tf.contrib.framework.assign_from_values(ensemble_key2val)
   return assign_op, feed_dict
 
