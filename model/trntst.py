@@ -104,7 +104,7 @@ class TrnTst(object):
   def customize_func_after_each_epoch(self, epoch):
     pass
 
-  def manual_init_weight(self):
+  def manual_init_weight(self, sess):
     """
     manual initialize weight
     """
@@ -196,7 +196,7 @@ class TrnTst(object):
       else:
         base_epoch = 0
         if manual_init:
-          self.manual_init_weight()
+          self.manual_init_weight(sess)
       summarywriter = tf.summary.FileWriter(self.path_cfg.log_dir, graph=sess.graph)
 
       # round 0, just for quick checking
