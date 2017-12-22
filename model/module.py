@@ -295,6 +295,7 @@ def _recursive_gradient_helper(module, loss_op, base_lr,
     elif self.config.opt_alg == 'RMSProp':
       optimizer = tf.train.RMSPropOptimizer(learning_rate)
     grads_and_weights = optimizer.compute_gradients(loss_op, weight)
+    print grads_and_weights
     train_ops.append(optimizer.apply_gradients(grads_and_weights))
   # recursive
   for key in module.submods:
