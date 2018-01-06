@@ -29,6 +29,8 @@ class ModuleConfig(object):
   def __init__(self):
     self.subcfgs = {}
     self.freeze = False
+    self.clip = False
+    self.clip_interval = [-1., 1.]
     self.lr_mult = 1.0
     self.opt_alg = 'Adam'
 
@@ -295,7 +297,11 @@ def _recursive_gradient_helper(module, loss_op, base_lr,
     elif self.config.opt_alg == 'RMSProp':
       optimizer = tf.train.RMSPropOptimizer(learning_rate)
     grads_and_weights = optimizer.compute_gradients(loss_op, weight)
-    grads_and_weights = [(tf.clip_by_value(grad, -1., 1.), var) for grad, var in grads_and_weights]
+    if module._config.clip:
+      grads_and_weights = [
+        (tf.clip_by_value(grad, module._config.clip_interval[0], module._config.clip_interval[1]), var) 
+        for grad, var in grads_and_weights
+      ]
     train_ops.append(optimizer.apply_gradients(grads_and_weights))
   # recursive
   for key in module.submods:
