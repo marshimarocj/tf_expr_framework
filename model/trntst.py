@@ -162,7 +162,7 @@ class TrnTst(object):
         loss = self.feed_data_and_run_loss_op_in_val(data, sess)
         avg_loss += loss
         iter_num += 1
-        print loss
+        # print loss
 
       avg_loss /= iter_num
       metrics['loss'] = avg_loss
