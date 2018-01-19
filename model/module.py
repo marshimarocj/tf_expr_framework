@@ -20,7 +20,7 @@ class Mode(enum.Enum):
 class ModuleConfig(object):
   """
   config of a module
-  in addition to the customized parameters in the config, it contains tree special attributes:
+  in addition to the customized parameters in the config, it contains three special attributes:
   [subcfgs] a dictionary of configs belong to the submodules in this module
   [freeze] boolean, whether to freeze the weights in this module in training. N.B. it doesn't affect the training of submodules
   [lr_mult] float, the multiplier to the base learning rate for weights in this modules. N.B. it doesn't affect the traninig of submodules
@@ -115,7 +115,7 @@ class AbstractModule(object):
     """
     raise NotImplementedError("""please customize AbstractModule.build_parameter_graph""")
 
-  def get_out_ops_in_mode(self, in_ops, mode):
+  def get_out_ops_in_mode(self, in_ops, mode, reuse=False):
     """
     return out_ops (a dictionary) given in_ops (a dictionary)
     """
@@ -222,6 +222,8 @@ class AbstractModel(AbstractModule):
       self._outputs = self.get_out_ops_in_mode(self._inputs, Mode.TRN_VAL)
       self._outputs[self.DefaultKey.LOSS] = self._add_loss()
       self._outputs[self.DefaultKey.TRAIN] = self._calculate_gradient()
+      update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+      self._outputs[self.DefaultKey.TRAIN].extend(update_ops)
 
       _recursive_gather_op2monitor_helper(self, self._op2monitor)
       self._outputs[self.DefaultKey.SAVER] = self._add_saver()
@@ -285,10 +287,6 @@ def _recursive_gradient_helper(module, loss_op, base_lr,
     tf.GraphKeys.TRAINABLE_VARIABLES, module.name_scope)
   if len(weight) > 0 and not module.config.freeze:
     learning_rate = base_lr * module.config.lr_mult
-
-    # print learning_rate, module.name_scope
-    # for w in weight:
-    #   print w.name
 
     if module.config.opt_alg == 'Adam':
       optimizer = tf.train.AdamOptimizer(learning_rate)
