@@ -264,7 +264,8 @@ class AbstractModel(AbstractModule):
     return summary_op
 
   def _add_saver(self):
-    saver = tf.train.Saver(tf.trainable_variables(), max_to_keep=1000)
+    # saver = tf.train.Saver(tf.trainable_variables(), max_to_keep=1000)
+    saver = tf.train.Saver(max_to_keep=1000)
     return saver
 
   def _add_init(self):
@@ -353,6 +354,8 @@ class AbstractPGModel(AbstractModel):
       self._outputs = self.get_out_ops_in_mode(self._inputs, Mode.TRN_VAL)
       self._outputs[self.DefaultKey.LOSS] = self._add_loss()
       self._outputs[self.DefaultKey.TRAIN] = self._calculate_gradient()
+      update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+      self._outputs[self.DefaultKey.TRAIN].extend(update_ops)
       self._rollout_outputs = self.get_out_ops_in_mode(self._rollout_inputs, Mode.ROLLOUT)
 
       _recursive_gather_op2monitor_helper(self, self._op2monitor)
