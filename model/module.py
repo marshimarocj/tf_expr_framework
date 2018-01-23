@@ -301,6 +301,8 @@ class AbstractModel(AbstractModule):
     for grad_and_weight, optimizer in zip(grads_and_weights, optimizers):
       train_ops.append(optimizer.apply_gradients([grad_and_weight]))
 
+    return train_ops
+
 
 def _recursive_gradient_helper(module, loss_op, base_lr,
     train_ops):
