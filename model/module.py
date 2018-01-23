@@ -347,7 +347,7 @@ def _recursive_collect_weight_and_optimizers(module, base_lr, ws, optimizers):
   # recursive
   for key in module.submods:
     submod = module.submods[key]
-    _recursive_collect_weight_and_optimizers(module, base_lr, ws, optimizers)
+    _recursive_collect_weight_and_optimizers(submod, base_lr, ws, optimizers)
 
 
 def _recursive_gather_op2monitor_helper(module, op2monitor):
