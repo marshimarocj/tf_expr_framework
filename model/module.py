@@ -294,9 +294,9 @@ class AbstractModel(AbstractModule):
 
     train_ops = []
     if self._config.save_memory:
-      grads = memory_saving_gradients.gradients(loss_op, ws)
+      grads = memory_saving_gradients.gradients(loss_op, ws, gate_gradients=True)
     else:
-      grads = tf.gradients(loss_op, ws)
+      grads = tf.gradients(loss_op, ws, gate_gradients=True)
     grads_and_weights = zip(grads, ws)
     for grad_and_weight, optimizer in zip(grads_and_weights, optimizers):
       train_ops.append(optimizer.apply_gradients([grad_and_weight]))
