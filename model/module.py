@@ -287,8 +287,6 @@ class AbstractModel(AbstractModule):
 
   def _calculate_gradient(self):
     loss_op = self._outputs[self.DefaultKey.LOSS]
-    # ws = []
-    # optimizers = []
     optimizer2ws = {}
     _recursive_collect_weight_and_optimizers(self, self.config.base_lr, 
       optimizer2ws)
@@ -306,9 +304,6 @@ class AbstractModel(AbstractModule):
     else:
       grads = tf.gradients(loss_op, ws, gate_gradients=True)
     grads_and_weights = zip(grads, ws)
-    # for grad_and_weight, optimizer in zip(grads_and_weights, optimizers):
-    #   train_ops.append(optimizer.apply_gradients([grad_and_weight]))
-    # train_ops.append(optimizers[0].apply_gradients(grads_and_weights))
     for optimizer in optimizer2idxs:
       start_idx, end_idx = optimizer2idxs[optimizer]
       train_ops.append(optimizer.apply_gradients(grads_and_weights[start_idx:end_idx]))
@@ -357,8 +352,6 @@ def _recursive_collect_weight_and_optimizers(module, base_lr, optimizer2ws):
       optimizer = tf.train.RMSPropOptimizer(learning_rate)
 
     optimizer2ws[optimizer] = weight
-    # ws += weight
-    # optimizers += [optimizer] * len(weight)
   # recursive
   for key in module.submods:
     submod = module.submods[key]
