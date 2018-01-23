@@ -35,6 +35,7 @@ class ModuleConfig(object):
     self.clip_interval = [-1., 1.]
     self.lr_mult = 1.0
     self.opt_alg = 'Adam'
+    self.device = '/device:GPU:0'
 
   def load(self, cfg_dict):
     for key in cfg_dict:
@@ -125,10 +126,12 @@ class AbstractModule(object):
     raise NotImplementedError("""please customize AbstractModule.get_out_ops_in_mode""")
 
   def build_parameter_graph(self):
-    self._build_parameter_graph()
+    with tf.device(self._config.device):
+      self._build_parameter_graph()
     for key in self._submods:
       submod = self._submods[key]
-      submod.build_parameter_graph()
+      with tf.device(self._config.subcfgs[key].device):
+        submod.build_parameter_graph()
 
 
 class ModelConfig(ModuleConfig):
