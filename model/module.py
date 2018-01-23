@@ -287,10 +287,18 @@ class AbstractModel(AbstractModule):
 
   def _calculate_gradient(self):
     loss_op = self._outputs[self.DefaultKey.LOSS]
-    ws = []
-    optimizers = []
+    # ws = []
+    # optimizers = []
+    optimizer2ws = {}
     _recursive_collect_weight_and_optimizers(self, self.config.base_lr, 
-      ws, optimizers)
+      optimizer2ws)
+    ws = []
+    optimizer2idxs = {}
+    for optimizer in optimizer2ws:
+      start_idx = len(ws)
+      ws += optimizer2ws[optimizer]
+      end_idx = len(ws)
+      optimizer2idxs[optimizer] = (start_idx, end_idx)
 
     train_ops = []
     if self._config.save_memory:
@@ -300,7 +308,10 @@ class AbstractModel(AbstractModule):
     grads_and_weights = zip(grads, ws)
     # for grad_and_weight, optimizer in zip(grads_and_weights, optimizers):
     #   train_ops.append(optimizer.apply_gradients([grad_and_weight]))
-    train_ops.append(optimizers[0].apply_gradients(grads_and_weights))
+    # train_ops.append(optimizers[0].apply_gradients(grads_and_weights))
+    for optimizer in optimizer2idxs:
+      start_idx, end_idx = optimizer2idxs[optimizer]
+      train_ops.append(optimizer.apply_gradients(grads_and_weights[start_idx:end_idx]))
 
     return train_ops
 
@@ -332,7 +343,7 @@ def _recursive_gradient_helper(module, loss_op, base_lr,
       train_ops)
 
 
-def _recursive_collect_weight_and_optimizers(module, base_lr, ws, optimizers):
+def _recursive_collect_weight_and_optimizers(module, base_lr, optimizer2ws):
   weight = tf.get_collection(
     tf.GraphKeys.TRAINABLE_VARIABLES, module.name_scope)
   if len(weight) > 0 and not module.config.freeze:
@@ -345,12 +356,13 @@ def _recursive_collect_weight_and_optimizers(module, base_lr, ws, optimizers):
     elif self.config.opt_alg == 'RMSProp':
       optimizer = tf.train.RMSPropOptimizer(learning_rate)
 
-    ws += weight
-    optimizers += [optimizer] * len(weight)
+    optimizer2ws[optimizer] = weight
+    # ws += weight
+    # optimizers += [optimizer] * len(weight)
   # recursive
   for key in module.submods:
     submod = module.submods[key]
-    _recursive_collect_weight_and_optimizers(submod, base_lr, ws, optimizers)
+    _recursive_collect_weight_and_optimizers(submod, base_lr, optimizer2ws)
 
 
 def _recursive_gather_op2monitor_helper(module, op2monitor):
