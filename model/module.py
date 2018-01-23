@@ -299,7 +299,7 @@ class AbstractModel(AbstractModule):
       grads = tf.gradients(loss_op, ws)
     grads_and_weights = zip(grads, ws)
     for grad_and_weight, optimizer in zip(grads_and_weights, optimizers):
-      train_ops.append(optimzier.apply_gradients([grad_and_weight]))
+      train_ops.append(optimizer.apply_gradients([grad_and_weight]))
 
 
 def _recursive_gradient_helper(module, loss_op, base_lr,
