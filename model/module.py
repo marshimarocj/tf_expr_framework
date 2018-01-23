@@ -289,7 +289,7 @@ class AbstractModel(AbstractModule):
     loss_op = self._outputs[self.DefaultKey.LOSS]
     ws = []
     optimizers = []
-    _recursive_collect_weight_and_optimizers(self, base_lr, 
+    _recursive_collect_weight_and_optimizers(self, self.config.base_lr, 
       ws, optimizers)
 
     train_ops = []
