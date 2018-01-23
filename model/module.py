@@ -9,6 +9,8 @@ import enum
 import tensorflow as tf
 import numpy as np
 
+import memory_saving_gradients
+
 
 class Mode(enum.Enum):
   TRN_VAL = 0
@@ -117,7 +119,8 @@ class AbstractModule(object):
 
   def get_out_ops_in_mode(self, in_ops, mode, reuse=False):
     """
-    return out_ops (a dictionary) given in_ops (a dictionary)
+    return out_ops (a dictionary) given in_ops (a dictionary), 
+    add checkpoints
     """
     raise NotImplementedError("""please customize AbstractModule.get_out_ops_in_mode""")
 
@@ -142,6 +145,7 @@ class ModelConfig(ModuleConfig):
     self.decay_schema = '' # , piecewise_constant
     self.decay_boundarys = []
     self.decay_values = []
+    self.save_memory = False
 
   def load(self, file):
     with open(file) as f:
@@ -273,13 +277,29 @@ class AbstractModel(AbstractModule):
       init = tf.global_variables_initializer()
     return init
 
+  # def _calculate_gradient(self):
+  #   train_ops = []
+  #   loss_op = self._outputs[self.DefaultKey.LOSS]
+  #   with tf.variable_scope(self.name_scope):
+  #     _recursive_gradient_helper(self, loss_op, self.config.base_lr,
+  #       train_ops)
+  #   return train_ops
+
   def _calculate_gradient(self):
-    train_ops = []
     loss_op = self._outputs[self.DefaultKey.LOSS]
-    with tf.variable_scope(self.name_scope):
-      _recursive_gradient_helper(self, loss_op, self.config.base_lr,
-        train_ops)
-    return train_ops
+    ws = []
+    optimizers = []
+    _recursive_collect_weight_and_optimizers(module, base_lr, 
+      ws, optimizers)
+
+    train_ops = []
+    if self._config.save_memory:
+      grads = memory_saving_gradients.gradients(loss_op, ws)
+    else:
+      grads = tf.gradients(loss_op, ws)
+    grads_and_weights = zip(grads, ws)
+    for grad_and_weight, optimizer in zip(grads_and_weights, optimizers):
+      train_ops.append(optimzier.apply_gradients([grad_and_weight]))
 
 
 def _recursive_gradient_helper(module, loss_op, base_lr,
@@ -307,6 +327,27 @@ def _recursive_gradient_helper(module, loss_op, base_lr,
     submod = module.submods[key]
     _recursive_gradient_helper(submod, loss_op, base_lr, 
       train_ops)
+
+
+def _recursive_collect_weight_and_optimizers(module, base_lr, ws, optimizers):
+  weight = tf.get_collection(
+    tf.GraphKeys.TRAINABLE_VARIABLES, module.name_scope)
+  if len(weight) > 0 and not module.config.freeze:
+    learning_rate = base_lr * module.config.lr_mult
+
+    if module.config.opt_alg == 'Adam':
+      optimizer = tf.train.AdamOptimizer(learning_rate)
+    elif self.config.opt_alg == 'SGD':
+      optimizer = tf.train.GradientDescentOptimizer(learning_rate)
+    elif self.config.opt_alg == 'RMSProp':
+      optimizer = tf.train.RMSPropOptimizer(learning_rate)
+
+    ws += weight
+    optimizers += [optimizer] * len(weight)
+  # recursive
+  for key in module.submods:
+    submod = module.submods[key]
+    _recursive_collect_weight_and_optimizers(module, base_lr, ws, optimizers)
 
 
 def _recursive_gather_op2monitor_helper(module, op2monitor):
