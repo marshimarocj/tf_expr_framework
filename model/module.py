@@ -121,7 +121,6 @@ class AbstractModule(object):
   def get_out_ops_in_mode(self, in_ops, mode, reuse=False):
     """
     return out_ops (a dictionary) given in_ops (a dictionary), 
-    add checkpoints
     """
     raise NotImplementedError("""please customize AbstractModule.get_out_ops_in_mode""")
 
@@ -185,7 +184,7 @@ class AbstractModel(AbstractModule):
 
   def _add_input_in_mode(self, mode):
     """
-    return dictionary of input placeholders
+    return dictionary of inputs
     """
     raise NotImplementedError("""please customize AbstractModel._add_input_in_mode""")
 
@@ -404,6 +403,7 @@ class AbstractPGModel(AbstractModel):
       self._rollout_inputs = self._add_input_in_mode(Mode.ROLLOUT)
       self.build_parameter_graph()
       self._outputs = self.get_out_ops_in_mode(self._inputs, Mode.TRN_VAL)
+
       self._outputs[self.DefaultKey.LOSS] = self._add_loss()
       self._outputs[self.DefaultKey.TRAIN] = self._calculate_gradient()
       update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
