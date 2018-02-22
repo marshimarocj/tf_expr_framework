@@ -195,7 +195,7 @@ class TrnTst(object):
         data = name.split('-')
         try:
           base_epoch = int(data[-1]) + 1
-        except e:
+        except:
           base_epoch = 0
       else:
         base_epoch = 0
