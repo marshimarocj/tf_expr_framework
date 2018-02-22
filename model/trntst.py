@@ -193,7 +193,10 @@ class TrnTst(object):
         self.model.saver.restore(sess, self.path_cfg.model_file)
         name = os.path.basename(self.path_cfg.model_file)
         data = name.split('-')
-        base_epoch = int(data[-1]) + 1
+        try:
+          base_epoch = int(data[-1]) + 1
+        except e:
+          base_epoch = 0
       else:
         base_epoch = 0
         if manual_init:
