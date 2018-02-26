@@ -183,7 +183,7 @@ class TrnTst(object):
     trn_tst_graph = self.model.build_trn_tst_graph(decay_boundarys=decay_boundarys)
 
     gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=memory_fraction)
-    configProto = tf.ConfigProto(gpu_options=gpu_options)
+    configProto = tf.ConfigProto(gpu_options=gpu_options, allow_soft_placement=True)
     with tf.Session(graph=trn_tst_graph, config=configProto) as sess:
       if self._debug:
         sess = tf_debug.LocalCLIDebugWrapperSession(sess)
@@ -229,7 +229,7 @@ class TrnTst(object):
   def test(self, tst_reader, memory_fraction=1.0):
     tst_graph = self.model.build_tst_graph()
     gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=memory_fraction)
-    config_proto = tf.ConfigProto(gpu_options=gpu_options)
+    config_proto = tf.ConfigProto(gpu_options=gpu_options, allow_soft_placement=True)
     with tf.Session(graph=tst_graph, config=config_proto) as sess:
       if self._debug:
         sess = tf_debug.LocalCLIDebugWrapperSession(sess)

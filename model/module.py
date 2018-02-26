@@ -13,6 +13,8 @@ import memory_saving_gradients
 
 
 class Mode(enum.Enum):
+  TRN = -1
+  VAL = -2
   TRN_VAL = 0
   TST = 1
   ROLLOUT = 2
@@ -66,7 +68,8 @@ class ModuleConfig(object):
     """
     check compatibility between configs
     """
-    raise NotImplementedError("""please customize ModuleConfig._assert""")
+    pass
+    # raise NotImplementedError("""please customize ModuleConfig._assert""")
 
 
 class AbstractModule(object):
