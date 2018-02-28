@@ -13,8 +13,6 @@ import memory_saving_gradients
 
 
 class Mode(enum.Enum):
-  TRN = -1
-  VAL = -2
   TRN_VAL = 0
   TST = 1
   ROLLOUT = 2
