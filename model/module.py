@@ -312,8 +312,8 @@ class AbstractModel(AbstractModule):
     else:
       grads = tf.gradients(loss_op, ws, gate_gradients=True)
     grads_and_weights = zip(grads, ws)
-    for grad, w in grads_and_weights:
-      print grad.op.name, w.op.name
+    # for grad, w in grads_and_weights:
+    #   print grad.op.name, w.op.name
     for optimizer in optimizer2idxs:
       start_idx, end_idx = optimizer2idxs[optimizer]
       train_ops.append(optimizer.apply_gradients(grads_and_weights[start_idx:end_idx]))
