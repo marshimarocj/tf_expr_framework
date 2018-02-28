@@ -347,9 +347,9 @@ def _recursive_collect_weight_and_optimizers(module, base_lr, optimizer2ws):
   name_scope = module.name_scope
   _weight = []
   for w in weight:
-    pos = w.op.name.find(name_scope)
-    if w.op.name[pos + len(name_scope)] != '/':
-      print name_scope, w.op.name
+    pos = w.name.find(name_scope)
+    print name_scope, w.name
+    if w.name[pos + len(name_scope)] != '/':
       _weight.append(w)
 
   if len(_weight) > 0 and not module.config.freeze:
