@@ -347,7 +347,7 @@ def _recursive_collect_weight_and_optimizers(module, base_lr, optimizer2ws):
   name_scope = module.name_scope
   _weight = []
   for w in weight:
-    pos = w.op.name.find(name_scope):
+    pos = w.op.name.find(name_scope)
     if w.op.name[pos + len(name_scope)] != '/':
       print name_scope, w.op.name
       _weight.append(w)
