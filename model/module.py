@@ -314,31 +314,31 @@ class AbstractModel(AbstractModule):
     return train_ops
 
 
-def _recursive_gradient_helper(module, loss_op, base_lr,
-    train_ops):
-  weight = tf.get_collection(
-    tf.GraphKeys.TRAINABLE_VARIABLES, module.name_scope)
-  if len(weight) > 0 and not module.config.freeze:
-    learning_rate = base_lr * module.config.lr_mult
+# def _recursive_gradient_helper(module, loss_op, base_lr,
+#     train_ops):
+#   weight = tf.get_collection(
+#     tf.GraphKeys.TRAINABLE_VARIABLES, module.name_scope)
+#   if len(weight) > 0 and not module.config.freeze:
+#     learning_rate = base_lr * module.config.lr_mult
 
-    if module.config.opt_alg == 'Adam':
-      optimizer = tf.train.AdamOptimizer(learning_rate)
-    elif self.config.opt_alg == 'SGD':
-      optimizer = tf.train.GradientDescentOptimizer(learning_rate)
-    elif self.config.opt_alg == 'RMSProp':
-      optimizer = tf.train.RMSPropOptimizer(learning_rate)
-    grads_and_weights = optimizer.compute_gradients(loss_op, weight)
-    if module._config.clip:
-      grads_and_weights = [
-        (tf.clip_by_value(grad, module._config.clip_interval[0], module._config.clip_interval[1]), var) 
-        for grad, var in grads_and_weights
-      ]
-    train_ops.append(optimizer.apply_gradients(grads_and_weights))
-  # recursive
-  for key in module.submods:
-    submod = module.submods[key]
-    _recursive_gradient_helper(submod, loss_op, base_lr, 
-      train_ops)
+#     if module.config.opt_alg == 'Adam':
+#       optimizer = tf.train.AdamOptimizer(learning_rate)
+#     elif self.config.opt_alg == 'SGD':
+#       optimizer = tf.train.GradientDescentOptimizer(learning_rate)
+#     elif self.config.opt_alg == 'RMSProp':
+#       optimizer = tf.train.RMSPropOptimizer(learning_rate)
+#     grads_and_weights = optimizer.compute_gradients(loss_op, weight)
+#     if module._config.clip:
+#       grads_and_weights = [
+#         (tf.clip_by_value(grad, module._config.clip_interval[0], module._config.clip_interval[1]), var) 
+#         for grad, var in grads_and_weights
+#       ]
+#     train_ops.append(optimizer.apply_gradients(grads_and_weights))
+#   # recursive
+#   for key in module.submods:
+#     submod = module.submods[key]
+#     _recursive_gradient_helper(submod, loss_op, base_lr, 
+#       train_ops)
 
 
 def _recursive_collect_weight_and_optimizers(module, base_lr, optimizer2ws):
@@ -347,6 +347,14 @@ def _recursive_collect_weight_and_optimizers(module, base_lr, optimizer2ws):
   if len(weight) > 0 and not module.config.freeze:
     learning_rate = base_lr * module.config.lr_mult
 
+    name_scope = module.name_scope
+    _weight = []
+    for w in weight:
+      pos = w.op.name.find(name_scope):
+      if w.op.name[pos + len(name_scope)] != '/':
+        print name_scope, w.op.name
+        _weight.append(w)
+
     if module.config.opt_alg == 'Adam':
       optimizer = tf.train.AdamOptimizer(learning_rate)
     elif self.config.opt_alg == 'SGD':
@@ -354,7 +362,7 @@ def _recursive_collect_weight_and_optimizers(module, base_lr, optimizer2ws):
     elif self.config.opt_alg == 'RMSProp':
       optimizer = tf.train.RMSPropOptimizer(learning_rate)
 
-    optimizer2ws[optimizer] = weight
+    optimizer2ws[optimizer] = _weight
   # recursive
   for key in module.submods:
     submod = module.submods[key]
