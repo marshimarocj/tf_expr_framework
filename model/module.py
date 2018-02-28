@@ -351,7 +351,7 @@ def _recursive_collect_weight_and_optimizers(module, base_lr, optimizer2ws):
   #   tf.GraphKeys.TRAINABLE_VARIABLES, module.name_scope)
   weight = module.weights
   for w in weight:
-    print module.name_scope, weight.op.name
+    print module.name_scope, w.op.name
 
   if len(weight) > 0 and not module.config.freeze:
     learning_rate = base_lr * module.config.lr_mult
