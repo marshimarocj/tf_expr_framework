@@ -312,6 +312,8 @@ class AbstractModel(AbstractModule):
     else:
       grads = tf.gradients(loss_op, ws, gate_gradients=True)
     grads_and_weights = zip(grads, ws)
+    for grad, w in grads_and_weights:
+      print grad.op.name, w.op.name
     for optimizer in optimizer2idxs:
       start_idx, end_idx = optimizer2idxs[optimizer]
       train_ops.append(optimizer.apply_gradients(grads_and_weights[start_idx:end_idx]))
@@ -350,8 +352,8 @@ def _recursive_collect_weight_and_optimizers(module, base_lr, optimizer2ws):
   # weight = tf.get_collection(
   #   tf.GraphKeys.TRAINABLE_VARIABLES, module.name_scope)
   weight = module.weights
-  for w in weight:
-    print module.name_scope, w.op.name
+  # for w in weight:
+  #   print module.name_scope, w.op.name
 
   if len(weight) > 0 and not module.config.freeze:
     learning_rate = base_lr * module.config.lr_mult
