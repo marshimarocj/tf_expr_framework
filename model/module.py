@@ -344,16 +344,16 @@ class AbstractModel(AbstractModule):
 def _recursive_collect_weight_and_optimizers(module, base_lr, optimizer2ws):
   weight = tf.get_collection(
     tf.GraphKeys.TRAINABLE_VARIABLES, module.name_scope)
-  if len(weight) > 0 and not module.config.freeze:
-    learning_rate = base_lr * module.config.lr_mult
+  name_scope = module.name_scope
+  _weight = []
+  for w in weight:
+    pos = w.op.name.find(name_scope):
+    if w.op.name[pos + len(name_scope)] != '/':
+      print name_scope, w.op.name
+      _weight.append(w)
 
-    name_scope = module.name_scope
-    _weight = []
-    for w in weight:
-      pos = w.op.name.find(name_scope):
-      if w.op.name[pos + len(name_scope)] != '/':
-        print name_scope, w.op.name
-        _weight.append(w)
+  if len(_weight) > 0 and not module.config.freeze:
+    learning_rate = base_lr * module.config.lr_mult
 
     if module.config.opt_alg == 'Adam':
       optimizer = tf.train.AdamOptimizer(learning_rate)
@@ -367,7 +367,6 @@ def _recursive_collect_weight_and_optimizers(module, base_lr, optimizer2ws):
   for key in module.submods:
     submod = module.submods[key]
     _recursive_collect_weight_and_optimizers(submod, base_lr, optimizer2ws)
-
 
 def _recursive_gather_op2monitor_helper(module, op2monitor):
   op2monitor.update(module.op2monitor)
