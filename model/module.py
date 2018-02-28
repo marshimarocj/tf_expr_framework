@@ -310,7 +310,7 @@ class AbstractModel(AbstractModule):
     if self._config.save_memory:
       grads = memory_saving_gradients.gradients(loss_op, ws, gate_gradients=True)
     else:
-      grads = tf.gradients(loss_op, ws, gate_gradients=False)
+      grads = tf.gradients(loss_op, ws, gate_gradients=True)
     grads_and_weights = zip(grads, ws)
     # for grad, w in grads_and_weights:
     #   print grad.op.name, w.op.name
