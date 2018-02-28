@@ -93,6 +93,7 @@ class AbstractModule(object):
     self._config = config
     self._op2monitor = {}
     self._submods = self._set_submods()
+    self._weights = []
 
   @property
   def config(self):
@@ -105,6 +106,10 @@ class AbstractModule(object):
   @property
   def submods(self):
     return self._submods
+
+  @property
+  def weights(self):
+    return self._weights
 
   def _set_submods(self):
     """
@@ -342,17 +347,11 @@ class AbstractModel(AbstractModule):
 
 
 def _recursive_collect_weight_and_optimizers(module, base_lr, optimizer2ws):
-  weight = tf.get_collection(
-    tf.GraphKeys.TRAINABLE_VARIABLES, module.name_scope)
-  name_scope = module.name_scope
-  _weight = []
-  for w in weight:
-    pos = w.name.find(name_scope)
-    print name_scope, w.name
-    if w.name[pos + len(name_scope)] != '/':
-      _weight.append(w)
+  # weight = tf.get_collection(
+  #   tf.GraphKeys.TRAINABLE_VARIABLES, module.name_scope)
+  weight = module.weights
 
-  if len(_weight) > 0 and not module.config.freeze:
+  if len(weight) > 0 and not module.config.freeze:
     learning_rate = base_lr * module.config.lr_mult
 
     if module.config.opt_alg == 'Adam':
@@ -362,7 +361,7 @@ def _recursive_collect_weight_and_optimizers(module, base_lr, optimizer2ws):
     elif self.config.opt_alg == 'RMSProp':
       optimizer = tf.train.RMSPropOptimizer(learning_rate)
 
-    optimizer2ws[optimizer] = _weight
+    optimizer2ws[optimizer] = weight
   # recursive
   for key in module.submods:
     submod = module.submods[key]
