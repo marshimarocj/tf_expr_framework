@@ -276,7 +276,8 @@ class AbstractModel(AbstractModule):
     return summary_op
 
   def _add_saver(self):
-    saver = tf.train.Saver(tf.trainable_variables() + tf.get_collection(tf.GraphKeys.MOVING_AVERAGE_VARIABLES), max_to_keep=1000)
+    # saver = tf.train.Saver(tf.trainable_variables() + tf.get_collection(tf.GraphKeys.MOVING_AVERAGE_VARIABLES), max_to_keep=1000)
+    saver = tf.train.Saver(tf.global_variables(), max_to_keep=1000)
     # saver = tf.train.Saver(max_to_keep=1000)
     return saver
 
