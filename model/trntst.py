@@ -239,7 +239,7 @@ class TrnTst(object):
       sess.run(self.model.init_op)
       if self.path_cfg.model_file is not None:
         # self.model.saver.restore(sess, self.path_cfg.model_file)
-        self._restore(sess, trn_tst_graph, self.path_cfg.model_file)
+        self._restore(sess, tst_graph, self.path_cfg.model_file)
 
       self.predict_in_tst(sess, tst_reader, self.path_cfg.predict_file)
 
