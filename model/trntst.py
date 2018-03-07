@@ -248,10 +248,7 @@ class TrnTst(object):
       all_var_names = set([v.op.name for v in  tf.global_variables()] + \
         [v.op.name for v in tf.get_collection(tf.GraphKeys.MOVING_AVERAGE_VARIABLES)])
 
-    key2val = {}
-    for model_file in model_files:
-      _key2val = framework.util.graph_ckpt.load_variable_in_ckpt(ckpt_file)
-      key2val.update(_key2val)
+    key2val = framework.util.graph_ckpt.load_variable_in_ckpt(ckpt_file)
 
     out_key2val = {}
     for key in all_var_names:
