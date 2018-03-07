@@ -252,7 +252,7 @@ class TrnTst(object):
     out_key2val = {}
     for key in all_var_names:
       if key in key2val:
-        print key
+        # print key
         out_key2val[key] = key2val[key]
 
     with graph.as_default():
