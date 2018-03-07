@@ -281,7 +281,7 @@ class AbstractModel(AbstractModule):
     for global_var in global_vars:
       name = global_var.op.name
       if 'moving_mean' in name or 'moving_variance' in name:
-        stat_vars.append(name)
+        stat_vars.append(global_var)
 
     return stat_vars
 
