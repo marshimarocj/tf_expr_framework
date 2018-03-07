@@ -233,9 +233,9 @@ class AbstractModel(AbstractModule):
       self.build_parameter_graph()
       self._outputs = self.get_out_ops_in_mode(self._inputs, Mode.TRN_VAL)
       self._outputs[self.DefaultKey.LOSS] = self._add_loss()
-      self._outputs[self.DefaultKey.TRAIN] = self._calculate_gradient()
       update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-      self._outputs[self.DefaultKey.TRAIN].extend(update_ops)
+      with tf.control_dependencies(update_ops):
+        self._outputs[self.DefaultKey.TRAIN] = self._calculate_gradient()
 
       _recursive_gather_op2monitor_helper(self, self._op2monitor)
       self._outputs[self.DefaultKey.SAVER] = self._add_saver()
@@ -275,25 +275,25 @@ class AbstractModel(AbstractModule):
       summary_op = tf.summary.merge_all()
     return summary_op
 
+  def _get_batchnorm_stat_vars(self):
+    global_vars = tf.global_variables()
+    stat_vars = []
+    for global_var in global_vars:
+      name = global_var.op.name
+      if 'moving_mean' in name or 'moving_variance' in name:
+        stat_vars.append(name)
+
+    return stat_vars
+
   def _add_saver(self):
-    model_vars =tf.trainable_variables() + tf.get_collection(tf.GraphKeys.MOVING_AVERAGE_VARIABLES) 
+    model_vars =tf.trainable_variables() + self._get_batchnorm_stat_var()
     saver = tf.train.Saver(model_vars, max_to_keep=1000)
-    # saver = tf.train.Saver(tf.global_variables() + tf.get_collection(tf.GraphKeys.MOVING_AVERAGE_VARIABLES), max_to_keep=1000)
-    # saver = tf.train.Saver(max_to_keep=1000)
     return saver
 
   def _add_init(self):
     with tf.variable_scope(self.name_scope):
       init = tf.global_variables_initializer()
     return init
-
-  # def _calculate_gradient(self):
-  #   train_ops = []
-  #   loss_op = self._outputs[self.DefaultKey.LOSS]
-  #   with tf.variable_scope(self.name_scope):
-  #     _recursive_gradient_helper(self, loss_op, self.config.base_lr,
-  #       train_ops)
-  #   return train_ops
 
   def _calculate_gradient(self):
     loss_op = self._outputs[self.DefaultKey.LOSS]
@@ -314,40 +314,11 @@ class AbstractModel(AbstractModule):
     else:
       grads = tf.gradients(loss_op, ws, gate_gradients=True)
     grads_and_weights = zip(grads, ws)
-    # for grad, w in grads_and_weights:
-    #   print grad.op.name, w.op.name
     for optimizer in optimizer2idxs:
       start_idx, end_idx = optimizer2idxs[optimizer]
       train_ops.append(optimizer.apply_gradients(grads_and_weights[start_idx:end_idx]))
 
     return train_ops
-
-
-# def _recursive_gradient_helper(module, loss_op, base_lr,
-#     train_ops):
-#   weight = tf.get_collection(
-#     tf.GraphKeys.TRAINABLE_VARIABLES, module.name_scope)
-#   if len(weight) > 0 and not module.config.freeze:
-#     learning_rate = base_lr * module.config.lr_mult
-
-#     if module.config.opt_alg == 'Adam':
-#       optimizer = tf.train.AdamOptimizer(learning_rate)
-#     elif self.config.opt_alg == 'SGD':
-#       optimizer = tf.train.GradientDescentOptimizer(learning_rate)
-#     elif self.config.opt_alg == 'RMSProp':
-#       optimizer = tf.train.RMSPropOptimizer(learning_rate)
-#     grads_and_weights = optimizer.compute_gradients(loss_op, weight)
-#     if module._config.clip:
-#       grads_and_weights = [
-#         (tf.clip_by_value(grad, module._config.clip_interval[0], module._config.clip_interval[1]), var) 
-#         for grad, var in grads_and_weights
-#       ]
-#     train_ops.append(optimizer.apply_gradients(grads_and_weights))
-#   # recursive
-#   for key in module.submods:
-#     submod = module.submods[key]
-#     _recursive_gradient_helper(submod, loss_op, base_lr, 
-#       train_ops)
 
 
 def _recursive_collect_weight_and_optimizers(module, base_lr, optimizer2ws):
