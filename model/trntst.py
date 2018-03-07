@@ -245,7 +245,8 @@ class TrnTst(object):
 
   def _restore(self, sess, graph, ckpt_file):
     with graph.as_default():
-      all_var_names = set([v.op.name for v in tf.global_variables()])
+      # all_var_names = set([v.op.name for v in tf.global_variables()])
+      all_var_names = set([v.op.name for v in tf.get_collection(tf.GraphKeys.MODEL_VARIABLES)])
 
     key2val = framework.util.graph_ckpt.load_variable_in_ckpt(ckpt_file)
 
