@@ -239,20 +239,20 @@ class TrnTst(object):
       sess.run(self.model.init_op)
       if self.path_cfg.model_file is not None:
         # self.model.saver.restore(sess, self.path_cfg.model_file)
-        self._restore(sess, trn_tst_graph, self.path_cfg.model_file)
+        self._restore(sess, tst_graph, self.path_cfg.model_file)
 
       self.predict_in_tst(sess, tst_reader, self.path_cfg.predict_file)
 
   def _restore(self, sess, graph, ckpt_file):
     with graph.as_default():
-      all_var_names = set([v.op.name for v in  tf.global_variables()] + \
-        [v.op.name for v in tf.get_collection(tf.GraphKeys.MOVING_AVERAGE_VARIABLES)])
+      all_var_names = set([v.op.name for v in tf.global_variables()])
 
     key2val = framework.util.graph_ckpt.load_variable_in_ckpt(ckpt_file)
 
     out_key2val = {}
     for key in all_var_names:
       if key in key2val:
+        print key
         out_key2val[key] = key2val[key]
 
     with graph.as_default():
