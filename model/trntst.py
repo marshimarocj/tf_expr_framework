@@ -8,6 +8,7 @@ sys.path.append('../')
 
 import tensorflow as tf
 from tensorflow.python import debug as tf_debug
+import framework.util.graph_ckpt
 
 import toolkit
 
@@ -190,7 +191,8 @@ class TrnTst(object):
         sess.add_tensor_filter("has_inf_or_nan", tf_debug.has_inf_or_nan)
       sess.run(self.model.init_op)
       if resume:
-        self.model.saver.restore(sess, self.path_cfg.model_file)
+        # self.model.saver.restore(sess, self.path_cfg.model_file)
+        self._restore(sess, trn_tst_graph, self.path_cfg.model_file)
         name = os.path.basename(self.path_cfg.model_file)
         data = name.split('-')
         try:
@@ -236,9 +238,30 @@ class TrnTst(object):
         sess.add_tensor_filter("has_inf_or_nan", tf_debug.has_inf_or_nan)
       sess.run(self.model.init_op)
       if self.path_cfg.model_file is not None:
-        self.model.saver.restore(sess, self.path_cfg.model_file)
+        # self.model.saver.restore(sess, self.path_cfg.model_file)
+        self._restore(sess, trn_tst_graph, self.path_cfg.model_file)
 
       self.predict_in_tst(sess, tst_reader, self.path_cfg.predict_file)
+
+  def _restore(self, sess, graph, ckpt_file):
+    with graph.as_default():
+      all_var_names = set([v.op.name for v in  tf.global_variables()] + \
+        [v.op.name for v in tf.get_collection(tf.GraphKeys.MOVING_AVERAGE_VARIABLES)])
+
+    key2val = {}
+    for model_file in model_files:
+      _key2val = framework.util.graph_ckpt.load_variable_in_ckpt(ckpt_file)
+      key2val.update(_key2val)
+
+    out_key2val = {}
+    for key in all_var_names:
+      if key in key2val:
+        out_key2val[key] = key2val[key]
+
+    with graph.as_default():
+      assign_op, feed_dict = tf.contrib.framework.assign_from_values(out_key2val)
+
+    sess.run(assign_op, feed_dict=feed_dict)
 
 
 class PGTrnTst(TrnTst):

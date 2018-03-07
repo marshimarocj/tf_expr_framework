@@ -276,8 +276,9 @@ class AbstractModel(AbstractModule):
     return summary_op
 
   def _add_saver(self):
-    saver = tf.train.Saver(tf.trainable_variables() + tf.get_collection(tf.GraphKeys.MOVING_AVERAGE_VARIABLES), max_to_keep=1000)
-    # saver = tf.train.Saver(tf.global_variables_initializerles() + tf.get_collection(tf.GraphKeys.MOVING_AVERAGE_VARIABLES), max_to_keep=1000)
+    model_vars =tf.trainable_variables() + tf.get_collection(tf.GraphKeys.MOVING_AVERAGE_VARIABLES) 
+    saver = tf.train.Saver(model_vars, max_to_keep=1000)
+    # saver = tf.train.Saver(tf.global_variables() + tf.get_collection(tf.GraphKeys.MOVING_AVERAGE_VARIABLES), max_to_keep=1000)
     # saver = tf.train.Saver(max_to_keep=1000)
     return saver
 
@@ -350,11 +351,7 @@ class AbstractModel(AbstractModule):
 
 
 def _recursive_collect_weight_and_optimizers(module, base_lr, optimizer2ws):
-  # weight = tf.get_collection(
-  #   tf.GraphKeys.TRAINABLE_VARIABLES, module.name_scope)
   weight = module.weights
-  # for w in weight:
-  #   print module.name_scope, w.op.name
 
   if len(weight) > 0 and not module.config.freeze:
     learning_rate = base_lr * module.config.lr_mult
