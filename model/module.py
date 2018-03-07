@@ -286,7 +286,7 @@ class AbstractModel(AbstractModule):
     return stat_vars
 
   def _add_saver(self):
-    model_vars =tf.trainable_variables() + self._get_batchnorm_stat_vars()
+    model_vars = tf.trainable_variables() + self._get_batchnorm_stat_vars()
     saver = tf.train.Saver(model_vars, max_to_keep=1000)
     return saver
 
