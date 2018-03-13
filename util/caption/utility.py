@@ -38,70 +38,70 @@ class CaptionInt2str(object):
     return captionStr
 
 
-def sentence_encode(sess, states, sentenceids, _states, _wordids, update_state_op, prob_op):
-  num_step = sentenceids.shape[1]
-  for i in xrange(num_step):
-    states, word_probs = sess.run([update_state_op, prob_op],
-      feed_dict={
-        _states: states,
-        _wordids: sentenceids[:, i]
-      })
+# def sentence_encode(sess, states, sentenceids, _states, _wordids, update_state_op, prob_op):
+#   num_step = sentenceids.shape[1]
+#   for i in xrange(num_step):
+#     states, word_probs = sess.run([update_state_op, prob_op],
+#       feed_dict={
+#         _states: states,
+#         _wordids: sentenceids[:, i]
+#       })
   
-  return states
+#   return states
 
 
-def sample_word_decode(sess, states, wordids,
-    _states, _wordids, update_state_op, prob_op, max_step):
-  batch_size = states.shape[0]
+# def sample_word_decode(sess, states, wordids,
+#     _states, _wordids, update_state_op, prob_op, max_step):
+#   batch_size = states.shape[0]
 
-  caption = np.zeros((batch_size, max_step), dtype=np.int32)
-  for i in xrange(max_step):
-    states, word_probs = sess.run([update_state_op, prob_op],
-      feed_dict={
-        _states: states,
-        _wordids: wordids
-      })
+#   caption = np.zeros((batch_size, max_step), dtype=np.int32)
+#   for i in xrange(max_step):
+#     states, word_probs = sess.run([update_state_op, prob_op],
+#       feed_dict={
+#         _states: states,
+#         _wordids: wordids
+#       })
 
-    num_word = word_probs.shape[1]
-    cum_probs = np.cumsum(word_probs, axis=1)
-    rand = np.random.rand(batch_size)
-    wordids = np.empty(batch_size)
-    for j in range(batch_size):
-      wordid = np.searchsorted(cum_probs[j], rand[j])
-      if wordid == num_word: wordid -= 1
-      wordids[j] = wordid
+#     num_word = word_probs.shape[1]
+#     cum_probs = np.cumsum(word_probs, axis=1)
+#     rand = np.random.rand(batch_size)
+#     wordids = np.empty(batch_size)
+#     for j in range(batch_size):
+#       wordid = np.searchsorted(cum_probs[j], rand[j])
+#       if wordid == num_word: wordid -= 1
+#       wordids[j] = wordid
 
-    caption[:, i] = wordids
+#     caption[:, i] = wordids
 
-  return caption
+#   return caption
 
 
-def sample_top_word_decode(sess, states, wordids,
-    _states, _wordids, update_state_op, prob_op, max_step, topk):
-  batch_size = states.shape[0]
+# def sample_top_word_decode(sess, states, wordids,
+#     _states, _wordids, update_state_op, prob_op, max_step, topk):
+#   batch_size = states.shape[0]
 
-  caption = np.zeros((batch_size, max_step), dtype=np.int32)
-  for i in xrange(max_step):
-    states, word_probs = sess.run([update_state_op, prob_op],
-      feed_dict={
-        _states: states,
-        _wordids: wordids
-      })
+#   caption = np.zeros((batch_size, max_step), dtype=np.int32)
+#   for i in xrange(max_step):
+#     states, word_probs = sess.run([update_state_op, prob_op],
+#       feed_dict={
+#         _states: states,
+#         _wordids: wordids
+#       })
 
-    num_word = word_probs.shape[1]
-    wids = np.argsort(-word_probs, axis=1)
-    wordids = np.empty(batch_size)
-    for j in range(batch_size):
-      topk_probs = word_probs[j][wids[j][:topk]]
-      cum_probs = np.cumsum(topk_probs)
-      rand = np.random.random(1)*np.max(cum_probs)
-      idx = np.searchsorted(cum_probs, rand)
-      if idx == topk: idx -= 1
-      wordids[j] = wids[j, idx]
+#     num_word = word_probs.shape[1]
+#     wids = np.argsort(-word_probs, axis=1)
+#     wordids = np.empty(batch_size)
+#     for j in range(batch_size):
+#       topk_probs = word_probs[j][wids[j][:topk]]
+#       cum_probs = np.cumsum(topk_probs)
+#       rand = np.random.random(1)*np.max(cum_probs)
+#       idx = np.searchsorted(cum_probs, rand)
+#       if idx == topk: idx -= 1
+#       wordids[j] = wids[j, idx]
 
-    caption[:, i] = wordids
+#     caption[:, i] = wordids
 
-  return caption
+#   return caption
 
 
 # # note: the addition_inputs remain same across different time steps
