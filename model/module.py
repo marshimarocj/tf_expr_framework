@@ -386,12 +386,12 @@ class AbstractPGModel(AbstractModel):
       self._rollout_inputs = self._add_input_in_mode(Mode.ROLLOUT)
       self.build_parameter_graph()
       self._outputs = self.get_out_ops_in_mode(self._inputs, Mode.TRN_VAL)
+      self._rollout_outputs = self.get_out_ops_in_mode(self._rollout_inputs, Mode.ROLLOUT)
 
       self._outputs[self.DefaultKey.LOSS] = self._add_loss()
-      self._outputs[self.DefaultKey.TRAIN] = self._calculate_gradient()
       update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-      self._outputs[self.DefaultKey.TRAIN].extend(update_ops)
-      self._rollout_outputs = self.get_out_ops_in_mode(self._rollout_inputs, Mode.ROLLOUT)
+      with tf.control_dependencies(update_ops):
+        self._outputs[self.DefaultKey.TRAIN] = self._calculate_gradient()
 
       _recursive_gather_op2monitor_helper(self, self._op2monitor)
       self._outputs[self.DefaultKey.SAVER] = self._add_saver()
