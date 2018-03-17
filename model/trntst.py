@@ -72,17 +72,8 @@ class TrnTst(object):
   ######################################
   # functions to customize 
   ######################################
-  def feed_data_and_trn(self, data, sess):
-    raise NotImplementedError("""please customize feed_data_and_trn""")
-
-  def feed_data_and_monitor_in_trn(self, data, sess, step):
-    raise NotImplementedError("""please customize feed_data_and_monitor""")
-
-  def feed_data_and_summary(self, data, sess):
-    """
-    return summarystr
-    """
-    raise NotImplementedError("""please customize feed_data_and_summary""")
+  def _construct_feed_dict_in_trn(self, data):
+    raise NotImplementedError("""please customize _construct_feed_dict_in_trn""")
 
   def feed_data_and_run_loss_op_in_val(self, data, sess):
     """
@@ -114,6 +105,32 @@ class TrnTst(object):
   ######################################
   # boilerpipe functions
   ######################################
+  def feed_data_and_trn(self, data, sess):
+    op_dict = self.model.op_in_trn()
+
+    feed_dict = self._construct_feed_dict_in_trn(data)
+    out = sess.run(
+      [op_dict[self.model.DefaultKey.LOSS]] + op_dict[self.model.DefaultKey.TRAIN],
+      feed_dict=feed_dict)
+
+  def feed_data_and_monitor_in_trn(self, data, sess, step):
+    op2monitor = self.model.op2monitor
+    names = op2monitor.keys()
+    ops = op2monitor.values()
+
+    feed_dict = self._construct_feed_dict_in_trn(data)
+    out = sess.run(ops, feed_dict=feed_dict)
+    for name, val in zip(names, out):
+      self._logger.info('(step %d) monitor "%s":%f', step, name, val)
+
+  def feed_data_and_summary(self, data, sess):
+    summary_op = self.model.summary_op
+
+    feed_dict = self._construct_feed_dict_in_trn(data)
+    out = sess.run(summary_op, feed_dict=feed_dict)
+
+    return out
+
   def _iterate_epoch(self,
       sess, trn_reader, tst_reader, summarywriter, step, total_step, epoch):
     trn_batch_size = self.model_cfg.trn_batch_size

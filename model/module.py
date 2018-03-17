@@ -124,7 +124,7 @@ class AbstractModule(object):
     """
     raise NotImplementedError("""please customize AbstractModule.build_parameter_graph""")
 
-  def get_out_ops_in_mode(self, in_ops, mode, reuse=False):
+  def get_out_ops_in_mode(self, in_ops, mode, reuse=False, **kwargs):
     """
     return out_ops (a dictionary) given in_ops (a dictionary), 
     """
@@ -200,7 +200,7 @@ class AbstractModel(AbstractModule):
     """
     raise NotImplementedError("""please customize AbstractModel._add_loss""")
 
-  def op_in_tst(self):
+  def op_in_tst(self, **kwargs):
     """
     return dictionary of op in tst
     """
@@ -256,13 +256,13 @@ class AbstractModel(AbstractModule):
 
     return basegraph
 
-  def op_in_trn(self):
+  def op_in_trn(self, **kwargs):
     return {
       self.DefaultKey.LOSS: self._outputs[self.DefaultKey.LOSS],
       self.DefaultKey.TRAIN: self._outputs[self.DefaultKey.TRAIN],
     }
 
-  def op_in_val(self):
+  def op_in_val(self, **kwargs):
     return {
       self.DefaultKey.LOSS: self._outputs[self.DefaultKey.LOSS],
     }
@@ -365,7 +365,7 @@ class AbstractPGModel(AbstractModel):
     self._rollout_inputs = {}
     self._rollout_outputs = {}
 
-  def op_in_rollout(self):
+  def op_in_rollout(self, **kwargs):
     """
     return dictionary of op in rollout
     """
