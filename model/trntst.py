@@ -112,6 +112,7 @@ class TrnTst(object):
     out = sess.run(
       [op_dict[self.model.DefaultKey.LOSS]] + op_dict[self.model.DefaultKey.TRAIN],
       feed_dict=feed_dict)
+    return out[0]
 
   def feed_data_and_monitor_in_trn(self, data, sess, step):
     op2monitor = self.model.op2monitor
@@ -136,13 +137,17 @@ class TrnTst(object):
     trn_batch_size = self.model_cfg.trn_batch_size
     trn_time = 0.
     trn_reader.reset()
+    avg_loss = 0.
+    cnt = 0
     for data in trn_reader.yield_trn_batch(trn_batch_size):
       tic = time.time()
-      self.feed_data_and_trn(data, sess)
+      loss = self.feed_data_and_trn(data, sess)
       toc = time.time()
       trn_time += toc - tic
 
+      avg_loss += loss
       step += 1
+      cnt += 1
 
       if self.model_cfg.monitor_iter > 0 and step % self.model_cfg.monitor_iter == 0:
         self.feed_data_and_monitor_in_trn(data, sess, step)
@@ -166,7 +171,8 @@ class TrnTst(object):
     self.model.saver.save(
       sess, os.path.join(self.path_cfg.model_dir, 'epoch'), global_step=epoch)
 
-    return step
+    avg_loss /= cnt
+    return step, avg_loss
 
   def _validation(self, sess, tst_reader):
     metrics = collections.OrderedDict()
@@ -230,11 +236,12 @@ class TrnTst(object):
 
       step = 0
       for epoch in xrange(base_epoch, self.model_cfg.num_epoch):
-        step = self._iterate_epoch(
+        step, avg_loss = self._iterate_epoch(
           sess, trn_reader, tst_reader, summarywriter, step, total_step, epoch)
 
         metrics = self._validation(sess, tst_reader)
         metrics['epoch'] = epoch
+        metrics['train_loss'] = avg_loss
 
         self._logger.info('epoch (%d/%d)', epoch, self.model_cfg.num_epoch)
         for key in metrics:
