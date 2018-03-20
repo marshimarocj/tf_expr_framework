@@ -305,6 +305,8 @@ class PGTrnTst(TrnTst):
     trn_time = 0.
     rollout_time = 0.
     trn_reader.reset()
+    avg_loss = 0.
+    cnt = 0
     for data in trn_reader.yield_trn_batch(trn_batch_size):
       tic = time.time()
       data = self.feed_data_and_rollout(data, sess)
@@ -312,11 +314,13 @@ class PGTrnTst(TrnTst):
       rollout_time += toc - tic
 
       tic = toc
-      self.feed_data_and_trn(data, sess)
+      loss = self.feed_data_and_trn(data, sess)
       toc = time.time()
       trn_time += toc - tic
 
       step += 1
+      avg_loss += loss
+      cnt += 1
 
       if self.model_cfg.monitor_iter > 0 and step % self.model_cfg.monitor_iter == 0:
         self.feed_data_and_monitor_in_trn(data, sess, step)
@@ -341,7 +345,8 @@ class PGTrnTst(TrnTst):
     self.model.saver.save(
       sess, os.path.join(self.path_cfg.model_dir, 'epoch'), global_step=epoch)
 
-    return step
+    avg_loss /= cnt
+    return step, avg_loss
 
 
 class StructTrnTst(PGTrnTst):
@@ -372,6 +377,8 @@ class StructTrnTst(PGTrnTst):
     trn_time = 0.
     rollout_time = 0.
     trn_reader.reset()
+    avg_loss = 0.
+    cnt = 0
     for data in trn_reader.yield_trn_batch(trn_batch_size):
       tic = time.time()
       data = self.feed_data_and_rollout(data, sess)
@@ -381,11 +388,13 @@ class StructTrnTst(PGTrnTst):
       rollout_time += toc - tic
 
       tic = toc
-      self.feed_data_and_trn(data, sess)
+      loss = self.feed_data_and_trn(data, sess)
       toc = time.time()
       trn_time += toc - tic
 
       step += 1
+      avg_loss += loss
+      cnt += 1
 
       if self.model_cfg.monitor_iter > 0 and step % self.model_cfg.monitor_iter == 0:
         self.feed_data_and_monitor_in_trn(data, sess, step)
@@ -410,7 +419,8 @@ class StructTrnTst(PGTrnTst):
     self.model.saver.save(
       sess, os.path.join(self.path_cfg.model_dir, 'epoch'), global_step=epoch)
 
-    return step
+    avg_loss /= cnt
+    return step, avg_loss
 
   def train(self, trn_reader, tst_reader, memory_fraction=1.0, resume=False):
     self.init_pool()
