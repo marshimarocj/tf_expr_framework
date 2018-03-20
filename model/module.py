@@ -17,6 +17,8 @@ class Mode(enum.Enum):
   TST = 1
   ROLLOUT = 2
   SCORE = 3
+  TRN = 4
+  VAL = 5
 
 
 class ModuleConfig(object):
