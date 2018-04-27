@@ -232,7 +232,7 @@ class GRUCell(framework.model.module.AbstractModule):
 
     r_state = r * state
 
-    candidate = tf.nn.xw_plus_b(tf.concat([inputs, r_state], 1), self.candidate_W, self.candidate_B)
+    candidate = tf.nn.xw_plus_b(tf.concat([input, r_state], 1), self.candidate_W, self.candidate_B)
 
     c = tf.tanh(candidate)
     new_h = u * state + (1 - u) * c
