@@ -225,7 +225,7 @@ class GRUCell(framework.model.module.AbstractModule):
 
   def _step(self, input, state, is_training):
     input = tf.contrib.layers.dropout(input, keep_prob=self._config.keepin_prob, is_training=is_training)
-    gate_inputs = tf.nn.xw_plus_b(tf.concat([inputs, state], 1), self.gate_W, self.gate_b)
+    gate_inputs = tf.nn.xw_plus_b(tf.concat([input, state], 1), self.gate_W, self.gate_b)
     
     value = tf.sigmoid(gate_inputs)
     r, u = tf.split(value, num_or_size_splits=2, axis=1)
