@@ -30,7 +30,7 @@ class Encoder1D(framework.model.module.AbstractModule):
 
   def _build_parameter_graph(self):
     with tf.variable_scope(self.name_scope):
-      dim_input = sum(self._config.dim_fts)
+      dim_input = self._config.dim_ft
       self.fc_W = tf.contrib.framework.model_variable('fc_W',
         shape=(1, dim_input, self._config.dim_output), dtype=tf.float32,
         initializer=tf.contrib.layers.xavier_initializer())
