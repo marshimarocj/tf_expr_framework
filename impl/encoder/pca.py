@@ -63,7 +63,7 @@ class Encoder2D(framework.model.module.AbstractModule):
     FT = 'ft' # (None, dim_time, H, W, dim_ft)
 
   class OutKey(enum.Enum):
-    EMBED = 'embed' # (None, dim_time, H, W, dim_embed)
+    EMBED = 'embed' # (None, dim_time, H, W, dim_output)
 
   def _set_submods(self):
     return {}
@@ -71,11 +71,11 @@ class Encoder2D(framework.model.module.AbstractModule):
   def _build_parameter_graph(self):
     with tf.variable_scope(self.name_scope):
       self.conv_W = tf.contrib.framework.model_variable('conv_W',
-        shape=(1, 1, self._config.dim_ft, self._config.dim_embed), dtype=tf.float32,
+        shape=(1, 1, self._config.dim_ft, self._config.dim_output), dtype=tf.float32,
         initializer=tf.contrib.layers.xavier_initializer())
       self._weights.append(self.conv_W)
       self.conv_B = tf.contrib.framework.model_variable('conv_B',
-        shape=(self._config.dim_embed,), dtype=tf.float32,
+        shape=(self._config.dim_output,), dtype=tf.float32,
         initializer=tf.constant_initializer(0.))
       self._weights.append(self.conv_B)
 
@@ -84,7 +84,7 @@ class Encoder2D(framework.model.module.AbstractModule):
     ft = tf.reshape(ft, [-1, shape[2], shape[3], shape[4]]) # (None*dim_time, H, W, dim_ft)
     ft = tf.nn.conv2d(ft, self.conv_W, [1, 1, 1, 1], 'VALID')
     ft = tf.nn.bias_add(ft, self.conv_B)
-    ft = tf.reshape(ft, [-1, shape[1], shape[2], shape[3], self._config.dim_embed])
+    ft = tf.reshape(ft, [-1, shape[1], shape[2], shape[3], self._config.dim_output])
     return ft
 
   def get_out_ops_in_mode(self, in_ops, mode):
