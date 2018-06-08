@@ -9,7 +9,7 @@ class Config(framework.model.module.ModuleConfig):
   def __init__(self):
     framework.model.module.ModuleConfig.__init__(self)
 
-    self.dim_fts = 1024
+    self.dim_ft = 1024
     self.dim_output = 512 # dim of feature layer output
 
   def _assert(self):
