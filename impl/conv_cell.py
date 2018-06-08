@@ -43,19 +43,19 @@ class GRUCell(framework.model.module.AbstractModule):
     kernel = self._config.conv_kernel
     with tf.variable_scope(self.name_scope):
       stddev = 1 / math.sqrt(self._config.dim_hidden + self._config.dim_input)
-      self.gate_W = tf.contrib.model_variable('gate_W', 
+      self.gate_W = tf.contrib.framework.model_variable('gate_W', 
         shape=(kernel[0], kernel[1], self._config.dim_hidden + self._config.dim_input, 2*self._config.dim_hidden),
         dtype=tf.float32,
         initializer=tf.truncated_normal_initializer(stddev=stddev, dtype=tf.float32))
-      self.gate_b = tf.contrib.model_variable('gate_b',
+      self.gate_b = tf.contrib.framework.model_variable('gate_b',
         shape=(2*self._config.dim_hidden,),
         dtype=tf.float32,
         initializer=tf.constant_initializer(1.0, dtype=tf.float32))
-      self.candidate_W = tf.contrib.model_variable('candidate_W',
+      self.candidate_W = tf.contrib.framework.model_variable('candidate_W',
         shape=(kernel[0], kernel[1], self._config.dim_hidden + self._config.dim_input, self._config.dim_hidden),
         dtype=tf.float32,
         initializer=tf.truncated_normal_initializer(stddev=stddev, dtype=tf.float32))
-      self.candidate_b = tf.contrib.model_variable('candidate_b',
+      self.candidate_b = tf.contrib.framework.model_variable('candidate_b',
         shape=(self._config.dim_hidden,),
         dtype=tf.float32,
         initializer=tf.constant_initializer(0.0, dtype=tf.float32))
