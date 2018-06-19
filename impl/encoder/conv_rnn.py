@@ -70,14 +70,13 @@ class Encoder(framework.model.module.AbstractModule):
 
   def get_out_ops_in_mode(self, in_ops, mode):
     with tf.variable_scope(self.name_scope):
-      tst_outputs = self._steps(in_ops[self.InKey.FT], in_ops[self.InKey.INIT_STATE], False)
+      outputs = self._steps(in_ops[self.InKey.FT], in_ops[self.InKey.INIT_STATE], in_ops[self.InKey.IS_TRN])
       if mode == framework.model.module.Mode.TRN_VAL:
-        outputs = self._steps(in_ops[self.InKey.FT], in_ops[self.InKey.INIT_STATE], True)
         return {
           self.OutKey.OUTPUT: outputs,
-          self.OutKey.TST_OUTPUT: tst_outputs,
+          self.OutKey.TST_OUTPUT: outputs,
         }
       else:
         return {
-          self.OutKey.TST_OUTPUT: tst_outputs,
+          self.OutKey.TST_OUTPUT: outputs,
         }
