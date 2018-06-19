@@ -78,5 +78,6 @@ class Encoder(framework.model.module.AbstractModule):
         }
       else:
         return {
+          self.OutKey.OUTPUT: outputs,
           self.OutKey.TST_OUTPUT: outputs,
         }
