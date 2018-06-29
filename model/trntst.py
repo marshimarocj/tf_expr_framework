@@ -230,7 +230,7 @@ class TrnTst(object):
 
       # round 0, just for quick checking
       metrics = self._validation(sess, tst_reader)
-      self._logger.info('step (%d/%d)', 0, total_step)
+      self._logger.info('step (%d)', 0)
       for key in metrics:
         self._logger.info('%s:%.4f', key, metrics[key])
 
