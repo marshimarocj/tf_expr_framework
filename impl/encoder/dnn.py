@@ -11,7 +11,7 @@ class Config(framework.model.module.ModuleConfig):
 
     self.dim_fts = [0,]
     self.dim_hiddens = []
-    # self.dim_output = 512 # dim of feature layer output
+    self.dim_output = 512 # dim of feature layer output
     self.keepin_prob = 1.
 
   def _assert(self):
@@ -33,8 +33,8 @@ class Encoder(framework.model.module.AbstractModule):
 
   def _build_parameter_graph(self):
     with tf.variable_scope(self.name_scope):
-      dim_inputs = [sum(self._config.dim_fts)] + self._config.dim_hiddens[:-1]
-      dim_outputs = self._config.dim_hiddens
+      dim_inputs = [sum(self._config.dim_fts)] + self._config.dim_hiddens
+      dim_outputs = self._config.dim_hiddens + [self._config.dim_output]
       layer = 0
       self.fc_Ws = []
       self.fc_Bs = []
