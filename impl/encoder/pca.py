@@ -17,7 +17,7 @@ class Config(framework.model.module.ModuleConfig):
 
 
 class Encoder(framework.model.module.AbstractModule):
-  name_scope = 'pca.Encoder'
+  name_scope = 'vanilla.Encoder'
 
   class InKey(enum.Enum):
     FT = 'ft' # (None, dim_ft)
