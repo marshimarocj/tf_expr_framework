@@ -45,7 +45,7 @@ class Encoder(framework.model.module.AbstractModule):
     ft = in_ops[self.InKey.FT]
     is_training = in_ops[self.InKey.IS_TRN]
 
-    ft = tf.contrib.layers.dropout(ft, keep_prob=self._config.keepin_prob, is_training=is_training)
+    # ft = tf.contrib.layers.dropout(ft, keep_prob=self._config.keepin_prob, is_training=is_training)
     embed = tf.nn.xw_plus_b(ft, self.fc_W, self.fc_B)
 
     return embed
