@@ -221,7 +221,7 @@ def beam_decode(next_step_func,
       end_idx = tf.where(is_end)
       beam_cum_log_prob_ops.append(log_prob_topk)
       beam_end_ops.append(end_idx)
-      log_prob_topk = tf.where(is_end, -100000000*tf.ones_like(log_prob_topk), log_prob_topk) 
+      log_prob_topk = tf.where(is_end, -1e8*tf.ones_like(log_prob_topk), log_prob_topk) 
 
       wordids = flatten(word_topk) # (batch_size*k,)
 
@@ -236,7 +236,6 @@ def beam_decode(next_step_func,
         outputs = tf.reshape(tf.tile(outputs, [1, k]), (-1, tf.shape(outputs)[1]))
     else:
       # first select top k*k; then select top k
-      # log_prob += tf.reshape(beam_cum_log_prob_ops[-1], (-1, 1))
       log_prob += tf.reshape(log_prob_topk, (-1, 1))
       log_prob_topk2, word_topk2 = tf.nn.top_k(log_prob, k) # (batch_size*k, k)
       log_prob_topk2 = tf.reshape(log_prob_topk2, (-1, k*k)) # (batch_size, k*k)
