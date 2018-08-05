@@ -213,7 +213,7 @@ class PoincareBallGradientBuilder(object):
       x = op.inputs[0]
       grad_scale = 1. - tf.square(tf.norm(x, axis=-1))
       grad_scale = tf.square(grad_scale) / 4.
-      return [grad_scale * grad]
+      return [tf.expand_dims(grad_scale, 1) * grad]
 
     g = tf.get_default_graph()
     with g.gradient_override_map({'Identity': grad_name}):
