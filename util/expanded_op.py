@@ -180,7 +180,7 @@ class FlipGradientBuilder(object):
     self.num_calls = 0
 
   def __call__(self, x, l=1.0):
-    grad_name = "FlipGradient%d" % self.num_calls
+    grad_name = "FlipGradient%d"%self.num_calls
 
     @tf.RegisterGradient(grad_name)
     def _flip_gradients(op, grad):
@@ -194,3 +194,32 @@ class FlipGradientBuilder(object):
     return y
 
 flip_gradient = FlipGradientBuilder()
+
+
+class PoincareBallGradientBuilder(object):
+  """
+  Riemannian gradient of poincare ball
+  equation (4) in pointcare embedding for learning hierarchical representations
+  https://github.com/vanzytay/HyperQA/blob/master/model/utilities.py
+  """
+  def __init__(object):
+    self.num_calls = 0
+
+  def __call__(self, x):
+    grad_name = 'PoincareBallGradient%d'%self.num_calls
+
+    @tf.RegisterGradient(grad_name)
+    def _poincareball_gradients(op, grad):
+      x = op.inputs[0]
+      grad_scale = 1. - tf.square(tf.norm(x, axis=-1))
+      grad_scale = tf.square(grad_scale) / 4.
+      return [grad_scale * grad]
+
+    g = tf.get_default_graph()
+    with g.gradient_override_map({'Identity': grad_name}):
+      y = tf.identity(x)
+
+    self.num_calls += 1
+    return y
+
+poincareball_gradient = PoincareBallGradientBuilder()
