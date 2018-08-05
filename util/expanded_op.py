@@ -202,7 +202,7 @@ class PoincareBallGradientBuilder(object):
   equation (4) in pointcare embedding for learning hierarchical representations
   https://github.com/vanzytay/HyperQA/blob/master/model/utilities.py
   """
-  def __init__(object):
+  def __init__(self):
     self.num_calls = 0
 
   def __call__(self, x):
