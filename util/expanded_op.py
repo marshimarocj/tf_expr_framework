@@ -244,8 +244,8 @@ class LorentzGradientBuilder(object):
     def _lorentz_gradients(op, grad):
       x = op.inputs[0]
       dim = tf.shape(x)[1]
-      lorentz_g = tf.eye(dim)
-      lorentz_g[0, 0] = -1.
+      lorentz_g = tf.concat([-tf.ones((1,)), tf.ones((dim-1,))])
+      lorentz_g = tf.diag(lorentz_g)
       grad = tf.matmul(grad, lorentz_g)
 
       proj = lorentz_scalar_product(lorentz_g, x, grad) # (None, 1)
