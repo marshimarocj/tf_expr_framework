@@ -261,7 +261,7 @@ class LorentzGradientBuilder(object):
       return [grad]
 
     g = tf.get_default_graph()
-    with tf.gradient_override_map({'Identity': grad_name}):
+    with g.gradient_override_map({'Identity': grad_name}):
       y = tf.identity(x)
 
     self.num_calls += 1
