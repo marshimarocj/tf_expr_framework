@@ -266,3 +266,5 @@ class LorentzGradientBuilder(object):
 
     self.num_calls += 1
     return y
+
+lorentz_gradient = LorentzGradientBuilder()
