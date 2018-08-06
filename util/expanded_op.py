@@ -226,7 +226,7 @@ poincareball_gradient = PoincareBallGradientBuilder()
 
 
 def lorentz_scalar_product(lorentz_g, lhs_vec, rhs_vec):
-  return tf.reduce_sum(tf.matmul(lhs_vec, lorentz) * rhs_vec, -1)
+  return tf.reduce_sum(tf.matmul(lhs_vec, lorentz_g) * rhs_vec, -1)
 
 
 class LorentzGradientBuilder(object):
