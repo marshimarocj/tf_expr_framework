@@ -199,7 +199,7 @@ flip_gradient = FlipGradientBuilder()
 class PoincareBallGradientBuilder(object):
   """
   Riemannian gradient of poincare ball
-  equation (4) in pointcare embedding for learning hierarchical representations
+  equation (4) in "pointcare embedding for learning hierarchical representations"
   https://github.com/vanzytay/HyperQA/blob/master/model/utilities.py
   """
   def __init__(self):
@@ -223,3 +223,46 @@ class PoincareBallGradientBuilder(object):
     return y
 
 poincareball_gradient = PoincareBallGradientBuilder()
+
+
+def lorentz_scalar_product(lorentz_g, lhs_vec, rhs_vec):
+  return tf.reduce_sum(tf.matmul(lhs_vec, lorentz) * rhs_vec, -1)
+
+
+class LorentzGradientBuilder(object):
+  """
+  Riemannian gradient of lorentz model
+  algorithm1 in "learning continuous hierarchies in the lorentz model of hyperbolic geometry"
+  """
+  def __init__(self):
+    self.num_calls = 0
+
+  def __call__(self, x, lr):
+    grad_name = 'LorentzGradient%d'%self.num_calls
+
+    @tf.RegisterGradient(grad_name)
+    def _lorentz_gradients(op, grad):
+      x = op.inputs[0]
+      dim = tf.shape(x)[1]
+      lorentz_g = tf.eye(dim)
+      lorentz_g[0, 0] = -1.
+      grad = tf.matmul(grad, lorentz_g)
+
+      proj = lorentz_scalar_product(lorentz_g, x, grad) # (None, 1)
+      proj_grad = grad + tf.expand_dims(proj, 1) * x
+
+      proj_grad *= -lr
+
+      lorentz_norm = lorentz_scalar_product(lorentz_g, proj_grad, proj_grad) # (None,)
+      updated_x = tf.cosh(lorentz_norm) * x
+      updated_x = tf.expand_dims(tf.sinh(lorentz_norm) / lorentz_norm, 1) * proj_grad
+      delta_x = updated_x - x
+      grad = delta_x / lr
+      return [grad]
+
+    g = tf.get_default_graph()
+    with tf.gradient_override_map({'Identity': grad_name}):
+      y = tf.identity(x)
+
+    self.num_calls += 1
+    return y
