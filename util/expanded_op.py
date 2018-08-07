@@ -261,7 +261,7 @@ class LorentzGradientBuilder(object):
       lorentz_grad = updated_x - x
       lorentz_grad = lorentz_grad / lr
       lorentz_grad = tf.Print(lorentz_grad, [tf.norm(lorentz_grad, axis=-1), tf.norm(grad, axis=-1)], 'grad_norm')
-      return [grad]
+      return [lorentz_grad]
 
     g = tf.get_default_graph()
     with g.gradient_override_map({'Identity': grad_name}):
