@@ -237,7 +237,7 @@ class LorentzGradientBuilder(object):
   def __init__(self):
     self.num_calls = 0
 
-  def __call__(self, x, lr):
+  def __call__(self, x, lr=1e-4):
     grad_name = 'LorentzGradient%d'%self.num_calls
 
     @tf.RegisterGradient(grad_name)
