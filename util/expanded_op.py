@@ -246,10 +246,10 @@ class LorentzGradientBuilder(object):
       dim = tf.shape(x)[1]
       lorentz_g = tf.concat([-tf.ones((1,)), tf.ones((dim-1,))], 0)
       lorentz_g = tf.diag(lorentz_g)
-      grad = tf.matmul(grad, lorentz_g)
+      proj_grad = tf.matmul(grad, lorentz_g)
 
-      proj = lorentz_scalar_product(lorentz_g, x, grad) # (None, 1)
-      proj_grad = grad + tf.expand_dims(proj, 1) * x
+      proj = lorentz_scalar_product(lorentz_g, x, proj_grad) # (None, 1)
+      proj_grad = proj_grad + tf.expand_dims(proj, 1) * x
 
       proj_grad *= -lr
       # proj_grad = tf.Print(proj_grad, [tf.norm(proj_grad, axis=-1)], 'proj_grad_norm')
