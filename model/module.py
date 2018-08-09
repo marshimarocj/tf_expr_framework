@@ -334,9 +334,9 @@ def _recursive_collect_weight_and_optimizers(module, base_lr, optimizer2ws):
 
     if module.config.opt_alg == 'Adam':
       optimizer = tf.train.AdamOptimizer(learning_rate)
-    elif self.config.opt_alg == 'SGD':
+    elif module.config.opt_alg == 'SGD':
       optimizer = tf.train.GradientDescentOptimizer(learning_rate)
-    elif self.config.opt_alg == 'RMSProp':
+    elif module.config.opt_alg == 'RMSProp':
       optimizer = tf.train.RMSPropOptimizer(learning_rate)
 
     optimizer2ws[optimizer] = weight

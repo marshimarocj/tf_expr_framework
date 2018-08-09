@@ -44,37 +44,6 @@ def flatten(tensor):
   return tf.reshape(tensor, (-1,))
 
 
-# # unified interface with LSTMCell's state_is_tuple mode
-# class GRUCell(tf.contrib.rnn.RNNCell):
-#   """Gated Recurrent Unit cell (cf. http://arxiv.org/abs/1406.1078)."""
-
-#   def __init__(self, num_units, activation=tf.nn.tanh, reuse=None):
-#     super(GRUCell, self).__init__(_reuse=reuse)
-#     self._num_units = num_units
-#     self._activation = activation
-
-#   @property
-#   def state_size(self):
-#     return (self._num_units,)
-
-#   @property
-#   def output_size(self):
-#     return self._num_units
-
-#   def call(self, inputs, state):
-#     """Gated recurrent unit (GRU) with nunits cells."""
-#     with tf.variable_scope("gates"):  # Reset gate and update gate.
-#       # We start with bias of 1.0 to not reset and not update.
-#       value = tf.nn.sigmoid(
-#         tf.nn.rnn_cell._linear([inputs, state[0]], 2 * self._num_units, True, 1.0))
-#       r, u = tf.split(value=value, num_or_size_splits=2, axis=1)
-#     with tf.variable_scope("candidate"):
-#       c = self._activation(
-#         tf.nn.rnn_cell._linear([inputs, r * state[0]], self._num_units, True))
-#     new_h = u * state[0] + (1 - u) * c
-#     return new_h, (new_h,)
-
-
 def beam_decode(next_step_func, 
     init_input, init_state,
     state_size, beam_width, num_step, 
