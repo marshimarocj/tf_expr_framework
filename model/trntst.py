@@ -96,11 +96,11 @@ class TrnTst(object):
   def customize_func_after_each_epoch(self, epoch):
     pass
 
-  def manual_init_weight(self, sess):
-    """
-    manual initialize weight
-    """
-    raise NotImplementedError("""please customize manual_init_weight""")
+  # def manual_init_weight(self, sess):
+  #   """
+  #   manual initialize weight
+  #   """
+  #   raise NotImplementedError("""please customize manual_init_weight""")
 
   ######################################
   # boilerpipe functions
@@ -195,16 +195,25 @@ class TrnTst(object):
 
     return metrics
 
-  def train(self, trn_reader, tst_reader, memory_fraction=1.0, resume=False, manual_init=False):
+  def train(self, trn_reader, tst_reader, memory_fraction=1.0, resume=False):
     batch_size = self.model_cfg.trn_batch_size
     batches_per_epoch = (trn_reader.num_record() + batch_size - 1) / batch_size
     total_step = batches_per_epoch * self.model_cfg.num_epoch
 
     decay_boundarys = []
+    step = 0
     if self.model_cfg.decay_schema == 'piecewise_constant':
       decay_boundarys = self.model_cfg.decay_boundarys
       decay_boundarys = [int(d*total_step) for d in decay_boundarys]
-    trn_tst_graph = self.model.build_trn_tst_graph(decay_boundarys=decay_boundarys)
+      if resume:
+        name = os.path.basename(self.path_cfg.model_file)
+        data = name.split('-')
+        try:
+          base_epoch = int(data[-1]) + 1
+        except:
+          base_epoch = 0
+        step = base_epoch * batches_per_epoch
+    trn_tst_graph = self.model.build_trn_tst_graph(decay_boundarys=decay_boundarys, step=step)
 
     gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=memory_fraction)
     configProto = tf.ConfigProto(gpu_options=gpu_options, allow_soft_placement=True)
@@ -222,10 +231,6 @@ class TrnTst(object):
           base_epoch = int(data[-1]) + 1
         except:
           base_epoch = 0
-      else:
-        base_epoch = 0
-        if manual_init:
-          self.manual_init_weight(sess)
       summarywriter = tf.summary.FileWriter(self.path_cfg.log_dir, graph=sess.graph)
 
       # round 0, just for quick checking
@@ -234,7 +239,6 @@ class TrnTst(object):
       for key in metrics:
         self._logger.info('%s:%.4f', key, metrics[key])
 
-      step = 0
       for epoch in xrange(base_epoch, self.model_cfg.num_epoch):
         step, avg_loss = self._iterate_epoch(
           sess, trn_reader, tst_reader, summarywriter, step, total_step, epoch)

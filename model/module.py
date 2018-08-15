@@ -152,7 +152,6 @@ class ModelConfig(ModuleConfig):
     self.val_loss = True
     self.monitor_iter = 1
     self.base_lr = 1e-4
-    self.decay_schema = '' # , piecewise_constant
     self.decay_boundarys = []
     self.decay_values = []
     self.save_memory = False
@@ -228,16 +227,23 @@ class AbstractModel(AbstractModule):
   def summary_op(self):
     return self._outputs[self.DefaultKey.SUMMARY]
 
-  def build_trn_tst_graph(self, decay_boundarys=[]):
+  def build_trn_tst_graph(self, decay_boundarys=[], step=0):
     basegraph = tf.Graph()
     with basegraph.as_default():
       self._inputs = self._add_input_in_mode(Mode.TRN_VAL)
       self.build_parameter_graph()
       self._outputs = self.get_out_ops_in_mode(self._inputs, Mode.TRN_VAL)
+
+      if len(decay_boundarys) > 0:
+        global_step = tf.Variable(step, trainable=False)
+        base_lr = tf.train.piecewise_constant(global_step, decay_boundarys, self._config.decay_values)
+      else:
+        base_lr = self._config.base_lr
+
       self._outputs[self.DefaultKey.LOSS] = self._add_loss()
       update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
       with tf.control_dependencies(update_ops):
-        self._outputs[self.DefaultKey.TRAIN] = self._calculate_gradient()
+        self._outputs[self.DefaultKey.TRAIN] = self._calculate_gradient(base_lr)
 
       _recursive_gather_op2monitor_helper(self, self._op2monitor)
       self._outputs[self.DefaultKey.SAVER] = self._add_saver()
@@ -300,10 +306,10 @@ class AbstractModel(AbstractModule):
       init = tf.global_variables_initializer()
     return init
 
-  def _calculate_gradient(self):
+  def _calculate_gradient(self, base_lr):
     loss_op = self._outputs[self.DefaultKey.LOSS]
     optimizer2ws = {}
-    _recursive_collect_weight_and_optimizers(self, self.config.base_lr, 
+    _recursive_collect_weight_and_optimizers(self, base_lr, 
       optimizer2ws)
     ws = []
     optimizer2idxs = {}
@@ -381,7 +387,7 @@ class AbstractPGModel(AbstractModel):
   def rollout_outputs(self):
     return self._rollout_outputs
 
-  def build_trn_tst_graph(self, decay_boundarys=[]):
+  def build_trn_tst_graph(self, decay_boundarys=[], step=0):
     basegraph = tf.Graph()
     with basegraph.as_default():
       self._inputs = self._add_input_in_mode(Mode.TRN_VAL)
@@ -390,10 +396,16 @@ class AbstractPGModel(AbstractModel):
       self._outputs = self.get_out_ops_in_mode(self._inputs, Mode.TRN_VAL)
       self._rollout_outputs = self.get_out_ops_in_mode(self._rollout_inputs, Mode.ROLLOUT)
 
+      if len(decay_boundarys) > 0:
+        global_step = tf.Variable(step, trainable=False)
+        base_lr = tf.train.piecewise_constant(global_step, decay_boundarys, self._config.decay_values)
+      else:
+        base_lr = self._config.base_lr
+
       self._outputs[self.DefaultKey.LOSS] = self._add_loss()
       update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
       with tf.control_dependencies(update_ops):
-        self._outputs[self.DefaultKey.TRAIN] = self._calculate_gradient()
+        self._outputs[self.DefaultKey.TRAIN] = self._calculate_gradient(base_lr)
 
       _recursive_gather_op2monitor_helper(self, self._op2monitor)
       self._outputs[self.DefaultKey.SAVER] = self._add_saver()
@@ -434,7 +446,7 @@ class AbstractStructModel(AbstractPGModel):
   def score_outputs(self):
     return self._score_outputs
 
-  def build_trn_tst_graph(self, decay_boundarys=[]):
+  def build_trn_tst_graph(self, decay_boundarys=[], step=0):
     basegraph = tf.Graph()
     with basegraph.as_default():
       self._inputs = self._add_input_in_mode(Mode.TRN_VAL)
@@ -442,10 +454,19 @@ class AbstractStructModel(AbstractPGModel):
       self._score_inputs = self._add_input_in_mode(Mode.SCORE)
       self.build_parameter_graph()
       self._outputs = self.get_out_ops_in_mode(self._inputs, Mode.TRN_VAL)
-      self._outputs[self.DefaultKey.LOSS] = self._add_loss()
-      self._outputs[self.DefaultKey.TRAIN] = self._calculate_gradient()
       self._rollout_outputs = self.get_out_ops_in_mode(self._rollout_inputs, Mode.ROLLOUT)
       self._score_outputs = self.get_out_ops_in_mode(self._score_inputs, Mode.SCORE)
+
+      if len(decay_boundarys) > 0:
+        global_step = tf.Variable(step, trainable=False)
+        base_lr = tf.train.piecewise_constant(global_step, decay_boundarys, self._config.decay_values)
+      else:
+        base_lr = self._config.base_lr
+
+      self._outputs[self.DefaultKey.LOSS] = self._add_loss()
+      update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+      with tf.control_dependencies(update_ops):
+        self._outputs[self.DefaultKey.TRAIN] = self._calculate_gradient(base_lr)
 
       _recursive_gather_op2monitor_helper(self, self._op2monitor)
       self._outputs[self.DefaultKey.SAVER] = self._add_saver()
