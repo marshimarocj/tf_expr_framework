@@ -202,7 +202,7 @@ class TrnTst(object):
 
     decay_boundarys = []
     step = 0
-    if self.model_cfg.decay_schema == 'piecewise_constant':
+    if len(self.model_cfg.decay_boundarys) > 0:
       decay_boundarys = self.model_cfg.decay_boundarys
       decay_boundarys = [int(d*total_step) for d in decay_boundarys]
       if resume:
