@@ -222,6 +222,7 @@ class TrnTst(object):
         sess = tf_debug.LocalCLIDebugWrapperSession(sess)
         sess.add_tensor_filter("has_inf_or_nan", tf_debug.has_inf_or_nan)
       sess.run(self.model.init_op)
+      base_epoch = 0
       if resume:
         # self.model.saver.restore(sess, self.path_cfg.model_file)
         self._restore(sess, trn_tst_graph, self.path_cfg.model_file)
@@ -230,7 +231,7 @@ class TrnTst(object):
         try:
           base_epoch = int(data[-1]) + 1
         except:
-          base_epoch = 0
+          pass
       summarywriter = tf.summary.FileWriter(self.path_cfg.log_dir, graph=sess.graph)
 
       # round 0, just for quick checking
