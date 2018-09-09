@@ -275,12 +275,12 @@ class TrnTst(object):
   def _restore(self, sess, graph, ckpt_file):
     with graph.as_default():
       all_var_names = set([v.op.name for v in tf.get_collection(tf.GraphKeys.MODEL_VARIABLES)])
-    print 'variable in graph'
-    print all_var_names
+    # print 'variable in graph'
+    # print all_var_names
 
     key2val = framework.util.graph_ckpt.load_variable_in_ckpt(ckpt_file)
-    print 'variable in ckpt'
-    print key2val.keys()
+    # print 'variable in ckpt'
+    # print key2val.keys()
 
     out_key2val = {}
     for key in all_var_names:
