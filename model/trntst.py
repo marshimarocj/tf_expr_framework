@@ -223,7 +223,7 @@ class TrnTst(object):
         sess.add_tensor_filter("has_inf_or_nan", tf_debug.has_inf_or_nan)
       sess.run(self.model.init_op)
       base_epoch = 0
-      if resume or self.path_cfg.model_file != None:
+      if resume or self.path_cfg.model_file != '':
         # self.model.saver.restore(sess, self.path_cfg.model_file)
         self._restore(sess, trn_tst_graph, self.path_cfg.model_file)
         name = os.path.basename(self.path_cfg.model_file)
