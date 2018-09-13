@@ -14,8 +14,8 @@ class CellConfig(framework.model.module.ModuleConfig):
 
     self.dim_hidden = 512
     self.dim_input = 512
-    self.keepout_prob = 1.
-    self.keepin_prob = 1.
+    # self.keepout_prob = 1.
+    # self.keepin_prob = 1.
 
   def _assert(self):
     pass
@@ -64,13 +64,13 @@ class LSTMCell(framework.model.module.AbstractModule):
       self._weights.append(self.b)
 
   def _step(self, input, state, is_training):
-    input = tf.contrib.layers.dropout(input, keep_prob=self._config.keepin_prob, is_training=is_training)
+    # input = tf.contrib.layers.dropout(input, keep_prob=self._config.keepin_prob, is_training=is_training)
     c, h = state
     ijfo = tf.nn.xw_plus_b(tf.concat([input, h], 1), self.W, self.b) # (None, 4*dim_hidden)
     i, j, f, o = tf.split(ijfo, 4, 1)
     new_c = c * tf.sigmoid(f + 1.0) + tf.sigmoid(i) * tf.tanh(j)
     new_h = tf.tanh(new_c) * tf.sigmoid(o)
-    new_h = tf.contrib.layers.dropout(new_h, keep_prob=self._config.keepout_prob, is_training=is_training)
+    # new_h = tf.contrib.layers.dropout(new_h, keep_prob=self._config.keepout_prob, is_training=is_training)
     return new_h, (new_c, new_h)
 
   def get_out_ops_in_mode(self, in_ops, mode):
@@ -142,7 +142,7 @@ class SCLSTMCell(framework.model.module.AbstractModule):
         initializer=tf.constant_initializer(0.0, dtype=tf.float32))
 
   def _step(self, input, s_idx, s_weight, state, is_training):
-    input = tf.contrib.layers.dropout(input, keep_prob=self._config.keepin_prob, is_training=is_training)
+    # input = tf.contrib.layers.dropout(input, keep_prob=self._config.keepin_prob, is_training=is_training)
     c, h = state
 
     latent_x = tf.matmul(input, self.W_c)
@@ -167,7 +167,7 @@ class SCLSTMCell(framework.model.module.AbstractModule):
     new_c = (
         c * tf.sigmoid(f + 1.0) + tf.sigmoid(i) * tf.tanh(j))
     new_h = tf.tanh(new_c) * tf.sigmoid(o)
-    new_h = tf.contrib.layers.dropout(new_h, keep_prob=self._config.keepout_prob, is_training=is_training)
+    # new_h = tf.contrib.layers.dropout(new_h, keep_prob=self._config.keepout_prob, is_training=is_training)
     return new_h, (new_c, new_h)
 
   def get_out_ops_in_mode(self, in_ops, mode):
@@ -224,7 +224,7 @@ class GRUCell(framework.model.module.AbstractModule):
       self._weights.append(self.candidate_b)
 
   def _step(self, input, state, is_training):
-    input = tf.contrib.layers.dropout(input, keep_prob=self._config.keepin_prob, is_training=is_training)
+    # input = tf.contrib.layers.dropout(input, keep_prob=self._config.keepin_prob, is_training=is_training)
     gate_inputs = tf.nn.xw_plus_b(tf.concat([input, state], 1), self.gate_W, self.gate_b)
     
     value = tf.sigmoid(gate_inputs)
@@ -236,7 +236,7 @@ class GRUCell(framework.model.module.AbstractModule):
 
     c = tf.tanh(candidate)
     new_h = u * state + (1 - u) * c
-    new_h = tf.contrib.layers.dropout(new_h, keep_prob=self._config.keepout_prob, is_training=is_training)
+    # new_h = tf.contrib.layers.dropout(new_h, keep_prob=self._config.keepout_prob, is_training=is_training)
     return new_h
 
   def get_out_ops_in_mode(self, in_ops, mode):
