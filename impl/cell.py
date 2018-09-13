@@ -236,6 +236,7 @@ class GRUCell(framework.model.module.AbstractModule):
 
     c = tf.tanh(candidate)
     new_h = u * state + (1 - u) * c
+    new_h = tf.contrib.layers.dropout(new_h, keep_prob=self._config.keepout_prob, is_training=is_training)
     return new_h
 
   def get_out_ops_in_mode(self, in_ops, mode):
