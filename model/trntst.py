@@ -4,6 +4,7 @@ import time
 import cPickle
 import collections
 import json
+import pprint
 sys.path.append('../')
 
 import tensorflow as tf
@@ -122,7 +123,7 @@ class TrnTst(object):
     feed_dict = self._construct_feed_dict_in_trn(data)
     out = sess.run(ops, feed_dict=feed_dict)
     for name, val in zip(names, out):
-      self._logger.info('(step %d) monitor "%s":%f', step, name, val)
+      self._logger.info('(step %d) monitor "%s":%s', step, name, pprint.pformat(val))
 
   def feed_data_and_summary(self, data, sess):
     summary_op = self.model.summary_op
