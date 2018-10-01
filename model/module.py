@@ -386,7 +386,7 @@ def _recursive_train_ops(module, base_lr, loss_op, save_memory=False):
         grads = memory_saving_gradients.gradients(loss_op, [weight], gate_gradients=True)
       else:
         grads = tf.gradients(loss_op, [weight], gate_gradients=True)
-      train_ops = optimizer.apply_gradients([(grads[0], weight)])
+      train_op = optimizer.apply_gradients([(grads[0], weight)])
       all_train_ops.append(train_op)
 
   # recursive
