@@ -156,6 +156,8 @@ class ModelConfig(ModuleConfig):
     self.decay_values = []
     self.save_memory = False
 
+    self.weight_name2mult_lr = {} # customize weight lr independent of module
+
   def load(self, file):
     with open(file) as f:
       data = json.load(f)
@@ -324,7 +326,16 @@ class AbstractModel(AbstractModule):
       grads = memory_saving_gradients.gradients(loss_op, ws, gate_gradients=True)
     else:
       grads = tf.gradients(loss_op, ws, gate_gradients=True)
-    grads_and_weights = zip(grads, ws)
+    grads_and_weights = []
+    for i in range(len(ws)):
+      w = ws[i]
+      name = w.name
+      grad = grads[i]
+      for weight_name in self._config.weight_name2mult_lr:
+        if weight_name in name:
+          grad *= self._config.weight_name2mult_lr[weight_name]
+      grads_and_weights.append((grad, w))
+    # grads_and_weights = zip(grads, ws)
     for optimizer in optimizer2idxs:
       start_idx, end_idx = optimizer2idxs[optimizer]
       train_ops.append(optimizer.apply_gradients(grads_and_weights[start_idx:end_idx]))
