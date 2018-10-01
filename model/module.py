@@ -326,6 +326,7 @@ class AbstractModel(AbstractModule):
       grads = memory_saving_gradients.gradients(loss_op, ws, gate_gradients=True)
     else:
       grads = tf.gradients(loss_op, ws, gate_gradients=True)
+    print grads
     grads_and_weights = []
     for i in range(len(ws)):
       w = ws[i]
