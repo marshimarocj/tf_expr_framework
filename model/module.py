@@ -365,7 +365,7 @@ def _recursive_train_ops(module, base_lr, loss_op, save_memory=False):
   weights = module.weights
 
   all_train_ops = []
-  if len(weight) > 0 and not module.config.freeze:
+  if len(weights) > 0 and not module.config.freeze:
     for weight in weights:
       learning_rate = base_lr * module.config.lr_mult
       # overwrite learning_rate for particular weight in weight_name2mult_lr
