@@ -39,6 +39,8 @@ class ModuleConfig(object):
     self.opt_alg = 'Adam'
     self.device = '/device:GPU:0'
 
+    self.weight_name2mult_lr = {} # customize weight lr within a module
+
   def load(self, cfg_dict):
     for key in cfg_dict:
       if key == 'subcfgs': # recursion
@@ -156,7 +158,7 @@ class ModelConfig(ModuleConfig):
     self.decay_values = []
     self.save_memory = False
 
-    self.weight_name2mult_lr = {} # customize weight lr independent of module
+    self.weight_name2mult_lr = {} # customize weight lr within a module
 
   def load(self, file):
     with open(file) as f:
@@ -310,37 +312,32 @@ class AbstractModel(AbstractModule):
 
   def _calculate_gradient(self, base_lr):
     loss_op = self._outputs[self.DefaultKey.LOSS]
-    optimizer2ws = {}
-    _recursive_collect_weight_and_optimizers(self, base_lr, 
-      optimizer2ws)
-    ws = []
-    optimizer2idxs = {}
-    for optimizer in optimizer2ws:
-      start_idx = len(ws)
-      ws += optimizer2ws[optimizer]
-      end_idx = len(ws)
-      optimizer2idxs[optimizer] = (start_idx, end_idx)
 
-    train_ops = []
-    if self._config.save_memory:
-      grads = memory_saving_gradients.gradients(loss_op, ws, gate_gradients=True)
-    else:
-      grads = tf.gradients(loss_op, ws, gate_gradients=True)
-    print grads
-    grads_and_weights = []
-    for i in range(len(ws)):
-      w = ws[i]
-      name = w.name
-      grad = grads[i]
-      for weight_name in self._config.weight_name2mult_lr:
-        if weight_name in name:
-          grad *= self._config.weight_name2mult_lr[weight_name]
-      grads_and_weights.append((grad, w))
+    # optimizer2ws = {}
+    # _recursive_collect_weight_and_optimizers(self, base_lr, 
+    #   optimizer2ws)
+    # ws = []
+    # optimizer2idxs = {}
+    # for optimizer in optimizer2ws:
+    #   start_idx = len(ws)
+    #   ws += optimizer2ws[optimizer]
+    #   end_idx = len(ws)
+    #   optimizer2idxs[optimizer] = (start_idx, end_idx)
+
+    # train_ops = []
+    # if self._config.save_memory:
+    #   grads = memory_saving_gradients.gradients(loss_op, ws, gate_gradients=True)
+    # else:
+    #   grads = tf.gradients(loss_op, ws, gate_gradients=True)
     # grads_and_weights = zip(grads, ws)
-    for optimizer in optimizer2idxs:
-      start_idx, end_idx = optimizer2idxs[optimizer]
-      train_ops.append(optimizer.apply_gradients(grads_and_weights[start_idx:end_idx]))
+    # for optimizer in optimizer2idxs:
+    #   start_idx, end_idx = optimizer2idxs[optimizer]
+    #   train_ops.append(optimizer.apply_gradients(grads_and_weights[start_idx:end_idx]))
 
+    # return train_ops
+
+    train_ops = _recursive_train_ops(self, base_lr, loss_op, 
+      save_memory=self._config.save_memory)
     return train_ops
 
 
@@ -362,6 +359,44 @@ def _recursive_collect_weight_and_optimizers(module, base_lr, optimizer2ws):
   for key in module.submods:
     submod = module.submods[key]
     _recursive_collect_weight_and_optimizers(submod, base_lr, optimizer2ws)
+
+
+def _recursive_train_ops(module, base_lr, loss_op, save_memory=False):
+  weights = module.weights
+
+  all_train_ops = []
+  if len(weight) > 0 and not module.config.freeze:
+    for weight in weights:
+      learning_rate = base_lr * module.config.lr_mult
+      # overwrite learning_rate for particular weight in weight_name2mult_lr
+      for weight_name in module.config.weight_name2mult_lr:
+        if weight_name in weight.name:
+          mult_lr = module.config.weight_name2mult_lr[weight_name]
+          learning_rate = base_lr * mult_lr
+          break
+
+      if module.config.opt_alg == 'Adam':
+        optimizer = tf.train.AdamOptimizer(learning_rate)
+      elif module.config.opt_alg == 'SGD':
+        optimizer = tf.train.GradientDescentOptimizer(learning_rate)
+      elif module.config.opt_alg == 'RMSProp':
+        optimizer = tf.train.RMSPropOptimizer(learning_rate)
+
+      if save_memory:
+        grads = memory_saving_gradients.gradients(loss_op, [weight], gate_gradients=True)
+      else:
+        grads = tf.gradients(loss_op, [weight], gate_gradients=True)
+      train_ops = optimizer.apply_gradients([(grads[0], weight)])
+      all_train_ops += train_ops
+
+  # recursive
+  for key in module.submods:
+    submod = module.submods[key]
+    train_ops = _recursive_train_ops(submod, base_lr, loss_op, save_memory=save_memory)
+    all_train_ops += train_ops
+
+  return all_train_ops
+
 
 def _recursive_gather_op2monitor_helper(module, op2monitor):
   op2monitor.update(module.op2monitor)
