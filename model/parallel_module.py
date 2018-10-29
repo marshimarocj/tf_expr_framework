@@ -13,14 +13,14 @@ import horovod.tensorflow as hvd
 import module
 
 
-class AbstractParallelModel(AbstractModule):
+class AbstractModel(AbstractModule):
   """
   model is the root node in the tree of module composition and is a special type of module. 
   therefore, it is an inheritance of AbstractModule. 
   it contains the full computation graph, including loss, graident, save, summary in addition to inference
   a model has the following special members:
   """
-  name_scope = 'AbstractParallelModel'
+  name_scope = 'AbstractModel'
 
   class DefaultKey(enum.Enum):
     INIT = 'init'
