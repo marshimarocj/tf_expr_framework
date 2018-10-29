@@ -102,6 +102,8 @@ class AbstractModel(module.AbstractModule):
       self._outputs[self.DefaultKey.INIT] = self._add_init()
       self._outputs[self.DefaultKey.BCAST] = self._add_bcast()
 
+    return basegraph
+
   def build_tst_graph(self):
     basegraph = tf.Graph()
     with basegraph.as_default():
