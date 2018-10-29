@@ -180,7 +180,7 @@ def _recursive_train_ops(module, base_lr, loss_op):
   # recursive
   for key in module.submods:
     submod = module.submods[key]
-    train_ops = _recursive_train_ops(submod, loss_op)
+    train_ops = _recursive_train_ops(submod, base_lr, loss_op)
     all_train_ops += train_ops
 
   return all_train_ops
