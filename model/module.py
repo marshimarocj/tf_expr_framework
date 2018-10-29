@@ -287,15 +287,15 @@ class AbstractModel(AbstractModule):
       summary_op = tf.summary.merge_all()
     return summary_op
 
-  def _get_batchnorm_stat_vars(self):
-    global_vars = tf.global_variables()
-    stat_vars = []
-    for global_var in global_vars:
-      name = global_var.op.name
-      if 'moving_mean' in name or 'moving_variance' in name:
-        stat_vars.append(global_var)
+  # def _get_batchnorm_stat_vars(self):
+  #   global_vars = tf.global_variables()
+  #   stat_vars = []
+  #   for global_var in global_vars:
+  #     name = global_var.op.name
+  #     if 'moving_mean' in name or 'moving_variance' in name:
+  #       stat_vars.append(global_var)
 
-    return stat_vars
+  #   return stat_vars
 
   def _add_saver(self):
     # model_vars = tf.trainable_variables() + self._get_batchnorm_stat_vars()
@@ -341,24 +341,24 @@ class AbstractModel(AbstractModule):
     return train_ops
 
 
-def _recursive_collect_weight_and_optimizers(module, base_lr, optimizer2ws):
-  weight = module.weights
+# def _recursive_collect_weight_and_optimizers(module, base_lr, optimizer2ws):
+#   weight = module.weights
 
-  if len(weight) > 0 and not module.config.freeze:
-    learning_rate = base_lr * module.config.lr_mult
+#   if len(weight) > 0 and not module.config.freeze:
+#     learning_rate = base_lr * module.config.lr_mult
 
-    if module.config.opt_alg == 'Adam':
-      optimizer = tf.train.AdamOptimizer(learning_rate)
-    elif module.config.opt_alg == 'SGD':
-      optimizer = tf.train.GradientDescentOptimizer(learning_rate)
-    elif module.config.opt_alg == 'RMSProp':
-      optimizer = tf.train.RMSPropOptimizer(learning_rate)
+#     if module.config.opt_alg == 'Adam':
+#       optimizer = tf.train.AdamOptimizer(learning_rate)
+#     elif module.config.opt_alg == 'SGD':
+#       optimizer = tf.train.GradientDescentOptimizer(learning_rate)
+#     elif module.config.opt_alg == 'RMSProp':
+#       optimizer = tf.train.RMSPropOptimizer(learning_rate)
 
-    optimizer2ws[optimizer] = weight
-  # recursive
-  for key in module.submods:
-    submod = module.submods[key]
-    _recursive_collect_weight_and_optimizers(submod, base_lr, optimizer2ws)
+#     optimizer2ws[optimizer] = weight
+#   # recursive
+#   for key in module.submods:
+#     submod = module.submods[key]
+#     _recursive_collect_weight_and_optimizers(submod, base_lr, optimizer2ws)
 
 
 def _recursive_train_ops(module, base_lr, loss_op, save_memory=False):

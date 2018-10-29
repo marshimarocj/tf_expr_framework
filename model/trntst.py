@@ -68,7 +68,7 @@ class TrnTst(object):
 
   @property
   def model(self):
-      return self._model
+    return self._model
 
   ######################################
   # functions to customize 
