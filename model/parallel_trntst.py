@@ -214,7 +214,7 @@ class TrnTst(object):
         except:
           pass
       sess.run(self.model.bcast)
-      summarywriter = tf.summarywriter.FileWriter(self.path_cfg.log_dir, graph=sess.graph)
+      summarywriter = tf.summary.FileWriter(self.path_cfg.log_dir, graph=sess.graph)
 
       # round 0, just for quick checking
       if hvd.rank() == 0:
