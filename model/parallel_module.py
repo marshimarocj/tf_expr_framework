@@ -13,7 +13,7 @@ import horovod.tensorflow as hvd
 import module
 
 
-class AbstractModel(AbstractModule):
+class AbstractModel(module.AbstractModule):
   """
   model is the root node in the tree of module composition and is a special type of module. 
   therefore, it is an inheritance of AbstractModule. 
@@ -31,7 +31,7 @@ class AbstractModel(AbstractModule):
     BCAST = 'broadcast'
 
   def __init__(self, config):
-    AbstractModule.__init__(self, config)
+    module.AbstractModule.__init__(self, config)
 
     self._inputs = {}
     self._outputs = {}
