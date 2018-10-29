@@ -165,11 +165,11 @@ def _recursive_train_ops(module, base_lr, loss_op):
   all_train_ops = []
   if len(weights) > 0 and not module.config.freeze:
     learning_rate = base_lr * module.config.lr_mult
-    if self.config.opt_alg == 'Adam':
+    if module.config.opt_alg == 'Adam':
       optimizer = tf.train.AdamOptimizer(learning_rate)
-    elif self.config.opt_alg == 'SGD':
+    elif module.config.opt_alg == 'SGD':
       optimizer = tf.train.GradientDescentOptimizer(learning_rate)
-    elif self.config.opt_alg == 'RMSProp':
+    elif module.config.opt_alg == 'RMSProp':
       optimizer = tf.train.RMSPropOptimizer(learning_rate)
     optimizer = hvd.DistributedOptimizer(optimizer)
 
