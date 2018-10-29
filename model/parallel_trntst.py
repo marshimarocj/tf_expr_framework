@@ -203,7 +203,7 @@ class TrnTst(object):
     config.gpu_options.visible_device_list = str(hvd.local_rank())
     with tf.Session(graph=trn_tst_graph, config=config) as sess:
       sess.run(self.model.init_op)
-      best_epoch = 0
+      base_epoch = 0
       if resume:
         if hvd.rank() == 0:
           self._restore(sess, trn_tst_graph, self.path_cfg.model_file)
