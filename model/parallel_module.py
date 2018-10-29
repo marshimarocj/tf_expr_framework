@@ -81,9 +81,9 @@ class AbstractModel(module.AbstractModule):
   def build_trn_tst_graph(self, decay_boundarys=[], step=0):
     basegraph = tf.Graph()
     with basegraph.as_default():
-      self._inputs = self._add_input_in_mode(Mode.TRN_VAL)
+      self._inputs = self._add_input_in_mode(module.Mode.TRN_VAL)
       self.build_parameter_graph()
-      self._outputs = self.get_out_ops_in_mode(self._inputs, Mode.TRN_VAL)
+      self._outputs = self.get_out_ops_in_mode(self._inputs, module.Mode.TRN_VAL)
 
       if len(decay_boundarys) > 0:
         global_step = tf.Variable(step, trainable=False)
@@ -105,9 +105,9 @@ class AbstractModel(module.AbstractModule):
   def build_tst_graph(self):
     basegraph = tf.Graph()
     with basegraph.as_default():
-      self._inputs = self._add_input_in_mode(Mode.TST)
+      self._inputs = self._add_input_in_mode(module.Mode.TST)
       self.build_parameter_graph()
-      self._outputs = self.get_out_ops_in_mode(self._inputs, Mode.TST)
+      self._outputs = self.get_out_ops_in_mode(self._inputs, module.Mode.TST)
 
       self._outputs[self.DefaultKey.SAVER] = self._add_saver()
       self._outputs[self.DefaultKey.INIT] = self._add_init()
