@@ -42,6 +42,8 @@ class TrnTst(object):
 
     self._logger = toolkit.set_logger('TrnTst', path_cfg.log_file)
 
+    hvd.init()
+
   @property
   def model_cfg(self):
     return self._model_cfg
@@ -177,11 +179,9 @@ class TrnTst(object):
     return metrics
 
   def train(self, trn_reader, tst_reader, memory_fraction=1.0, resume=False):
-    hvd.init()
-
     batch_size = self.model_cfg.trn_batch_size
     batches_per_epoch = (trn_reader.num_record() + batch_size - 1) / batch_size
-    total_step = batches_per_epoch * self.model_cfg.num_epoch // hvd.size()
+    total_step = batches_per_epoch * self.model_cfg.num_epoch
 
     decay_boundarys = []
     step = 0
@@ -223,7 +223,7 @@ class TrnTst(object):
         for key in metrics:
           self._logger.info('%s:%.4f', key, metrics[key])
 
-      for epoch in xrange(base_epoch, self.model_cfg.num_epoch // hvd.size()):
+      for epoch in xrange(base_epoch, self.model_cfg.num_epoch):
         step, avg_loss = self._iterate_epoch(
           sess, trn_reader, tst_reader, summarywriter, step, total_step, epoch)
 
