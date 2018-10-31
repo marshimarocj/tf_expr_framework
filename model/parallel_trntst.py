@@ -215,11 +215,12 @@ class TrnTst(object):
           pass
       sess.run(self.model.bcast)
       summarywriter = tf.summary.FileWriter(self.path_cfg.log_dir, graph=sess.graph)
+      print step, base_epoch
 
       # round 0, just for quick checking
       if hvd.rank() == 0:
         metrics = self._validation(sess, tst_reader)
-        self._logger.info('step (%d)', 0)
+        self._logger.info('step (%d)', step)
         for key in metrics:
           self._logger.info('%s:%.4f', key, metrics[key])
 
