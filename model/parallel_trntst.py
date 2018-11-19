@@ -215,7 +215,7 @@ class TrnTst(object):
           pass
       sess.run(self.model.bcast)
       summarywriter = tf.summary.FileWriter(self.path_cfg.log_dir, graph=sess.graph)
-      print step, base_epoch
+      # print step, base_epoch
 
       # round 0, just for quick checking
       if hvd.rank() == 0:
