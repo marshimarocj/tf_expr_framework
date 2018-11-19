@@ -16,8 +16,8 @@ class Config(framework.model.module.ModuleConfig):
   def __init__(self):
     framework.model.module.ModuleConfig.__init__(self)
 
-    self.subcfgs[FORWARD_CELL] = framework.impl.cell.CellConfig()
-    self.subcfgs[BACKWARD_CELL] = framework.impl.cell.CellConfig()
+    self.subcfgs[CELL] = framework.impl.cell.CellConfig()
+    self.subcfgs[RCELL] = framework.impl.cell.CellConfig()
     self.cell_type = 'lstm'
 
     self.num_step = 10
