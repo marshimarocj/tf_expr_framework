@@ -42,11 +42,11 @@ class Encoder(framework.model.module.AbstractModule):
 
   def _set_submods(self):
     if self._config.cell_type == 'gru':
-      encoder_cell = cell.GRUCell(self._config.subcfgs[CELL])
-      reverse_cell = cell.GRUCell(self._config.subcfgs[RCELL])
+      encoder_cell = framework.impl.cell.GRUCell(self._config.subcfgs[CELL])
+      reverse_cell = framework.impl.cell.GRUCell(self._config.subcfgs[RCELL])
     elif self._config.cell_type == 'lstm':
-      encoder_cell = cell.LSTMCell(self._config.subcfgs[CELL])
-      reverse_cell = cell.LSTMCell(self._config.subcfgs[RCELL])
+      encoder_cell = framework.impl.cell.LSTMCell(self._config.subcfgs[CELL])
+      reverse_cell = framework.impl.cell.LSTMCell(self._config.subcfgs[RCELL])
     reverse_cell.name_scope += '.reverse'
 
     return {
