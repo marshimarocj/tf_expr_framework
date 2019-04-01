@@ -9,7 +9,7 @@ import enum
 import tensorflow as tf
 import numpy as np
 
-import memory_saving_gradients
+# import memory_saving_gradients
 
 
 class Mode(enum.Enum):
