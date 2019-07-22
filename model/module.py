@@ -135,12 +135,12 @@ class AbstractModule(object):
     raise NotImplementedError("""please customize AbstractModule.get_out_ops_in_mode""")
 
   def build_parameter_graph(self):
-    with tf.device(self._config.device):
-      self._build_parameter_graph()
+    # with tf.device(self._config.device):
+    self._build_parameter_graph()
     for key in self._submods:
       submod = self._submods[key]
-      with tf.device(self._config.subcfgs[key].device):
-        submod.build_parameter_graph()
+      # with tf.device(self._config.subcfgs[key].device):
+      submod.build_parameter_graph()
 
 
 class ModelConfig(ModuleConfig):
