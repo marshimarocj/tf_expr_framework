@@ -217,7 +217,7 @@ class TrnTst(object):
     trn_tst_graph = self.model.build_trn_tst_graph(decay_boundarys=decay_boundarys, step=step)
 
     gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=memory_fraction)
-    configProto = tf.ConfigProto(gpu_options=gpu_options, allow_soft_placement=True)
+    configProto = tf.ConfigProto(gpu_options=gpu_options, log_device_placement=TRUE)
     with tf.Session(graph=trn_tst_graph, config=configProto) as sess:
       if self._debug:
         sess = tf_debug.LocalCLIDebugWrapperSession(sess)
