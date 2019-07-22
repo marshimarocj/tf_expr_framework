@@ -336,6 +336,8 @@ class AbstractModel(AbstractModule):
 
     # return train_ops
 
+    tf.debugging.set_log_device_placement(True)
+
     train_ops = _recursive_train_ops(self, base_lr, loss_op, 
       save_memory=self._config.save_memory)
     return train_ops
